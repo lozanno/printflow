@@ -1,0 +1,10 @@
+{
+  "title": "Business Cards",
+
+  "components": [
+    "quantity",
+    "size",
+    "sides",
+    "finish"
+  ]
+}
