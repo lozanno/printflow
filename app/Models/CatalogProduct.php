@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
  * @property int $shop_id
  * @property int $product_template_id
  * @property string|null $name_override
+ * @property string|null $slug
  * @property string|null $image_path
  * @property string|null $image_url
  * @property string|null $description
@@ -23,7 +25,7 @@ use Illuminate\Support\Facades\Storage;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['shop_id', 'product_template_id', 'name_override', 'image_path', 'description', 'is_active'])]
+#[Fillable(['shop_id', 'product_template_id', 'name_override', 'slug', 'image_path', 'description', 'is_active'])]
 class CatalogProduct extends Model
 {
     /**
@@ -81,5 +83,13 @@ class CatalogProduct extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * @return BelongsToMany<Category, $this>
+     */
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'catalog_product_category');
     }
 }

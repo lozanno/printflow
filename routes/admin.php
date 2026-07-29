@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CatalogProductController;
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ComponentController;
 use App\Http\Controllers\Admin\ComponentOptionController;
 use App\Http\Controllers\Admin\OptionPriceModifierController;
@@ -10,6 +11,8 @@ use App\Http\Controllers\Admin\ProductTemplateController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('categories', CategoryController::class)->except(['show']);
+
     Route::resource('components', ComponentController::class)->except(['show']);
 
     Route::post('components/{component}/options', [ComponentOptionController::class, 'store'])

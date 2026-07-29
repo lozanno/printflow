@@ -12,7 +12,7 @@ it('returns a computed total for a valid tiered selection', function () {
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1.10,
     ]);
 
-    $this->postJson("/productos/{$catalogProduct->id}/cotizar", [
+    $this->postJson("/{$catalogProduct->slug}/cotizar", [
         'selections' => ['quantity' => '500'],
     ])
         ->assertOk()
@@ -28,7 +28,7 @@ it('returns a computed total for a valid area-based selection', function () {
     attachComponent($catalogProduct->productTemplate, 'dimensions', 'Dimensiones', InputType::Dimensions);
     $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180, 'setup_fee' => 50]]);
 
-    $this->postJson("/productos/{$catalogProduct->id}/cotizar", [
+    $this->postJson("/{$catalogProduct->slug}/cotizar", [
         'selections' => ['dimensions' => ['width' => 2, 'height' => 1.5]],
     ])
         ->assertOk()
@@ -42,7 +42,7 @@ it('returns a clean 422 when a required selection is missing', function () {
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
 
-    $this->postJson("/productos/{$catalogProduct->id}/cotizar", ['selections' => []])
+    $this->postJson("/{$catalogProduct->slug}/cotizar", ['selections' => []])
         ->assertStatus(422)
         ->assertJsonStructure(['message']);
 });
@@ -56,7 +56,7 @@ it('returns a clean 422 for a choice value that does not exist', function () {
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
 
-    $this->postJson("/productos/{$catalogProduct->id}/cotizar", [
+    $this->postJson("/{$catalogProduct->slug}/cotizar", [
         'selections' => ['quantity' => 'not-a-real-option'],
     ])->assertStatus(422);
 });
@@ -65,6 +65,6 @@ it('404s when quoting an inactive product', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $catalogProduct->update(['is_active' => false]);
 
-    $this->postJson("/productos/{$catalogProduct->id}/cotizar", ['selections' => []])
+    $this->postJson("/{$catalogProduct->slug}/cotizar", ['selections' => []])
         ->assertNotFound();
 });

@@ -26,6 +26,7 @@ type ProductComponent = {
 
 type CatalogProductDetail = {
     id: number;
+    slug: string;
     name: string;
     image_url: string | null;
     description: string | null;
@@ -117,7 +118,7 @@ export default function CatalogShow({
         const timeout = setTimeout(() => {
             setLoading(true);
 
-            fetch(toUrl(quote(catalogProduct.id)), {
+            fetch(toUrl(quote(catalogProduct.slug)), {
                 method: 'POST',
                 signal: controller.signal,
                 headers: {
@@ -162,7 +163,7 @@ export default function CatalogShow({
             clearTimeout(timeout);
             controller.abort();
         };
-    }, [selections, catalogProduct.id]);
+    }, [selections, catalogProduct.slug]);
 
     const selectionSummary = catalogProduct.components
         .map((component) => {

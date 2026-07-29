@@ -6,6 +6,7 @@ import {
     Package,
     ShoppingBag,
     SlidersHorizontal,
+    Tag,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as catalogProductsIndex } from '@/routes/admin/catalog-products';
+import { index as categoriesIndex } from '@/routes/admin/categories';
 import { index as componentsIndex } from '@/routes/admin/components';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import type { NavItem } from '@/types';
@@ -46,6 +48,11 @@ const mainNavItems: NavItem[] = [
         title: 'Catalogo',
         href: catalogProductsIndex(),
         icon: ShoppingBag,
+    },
+    {
+        title: 'Categorias',
+        href: categoriesIndex(),
+        icon: Tag,
     },
 ];
 

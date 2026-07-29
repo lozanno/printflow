@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\InputType;
 use App\Models\CatalogProduct;
+use App\Models\Category;
 use App\Models\Component;
 use App\Models\Shop;
 use Illuminate\Support\Collection;
@@ -25,26 +26,73 @@ class CatalogController extends Controller
                 ->get()
                 ->map(fn (CatalogProduct $catalogProduct) => [
                     'id' => $catalogProduct->id,
+                    'slug' => $catalogProduct->slug,
                     'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
                     'image_url' => $catalogProduct->image_url,
                 ]),
+            'categories' => $shop->categories()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug']),
         ]);
     }
 
-    public function show(CatalogProduct $catalogProduct): Response
+    public function show(string $slug): Response
     {
-        $this->ensurePubliclyVisible($catalogProduct);
+        $shop = Shop::current();
 
+        $catalogProduct = CatalogProduct::query()
+            ->where('shop_id', $shop->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->first();
+
+        if ($catalogProduct) {
+            return $this->showProduct($catalogProduct);
+        }
+
+        $category = Category::query()
+            ->where('shop_id', $shop->id)
+            ->where('slug', $slug)
+            ->first();
+
+        abort_unless($category !== null, 404);
+
+        return $this->showCategory($category);
+    }
+
+    private function showProduct(CatalogProduct $catalogProduct): Response
+    {
         $catalogProduct->load('productTemplate.components.options');
 
         return Inertia::render('catalog/show', [
             'catalogProduct' => [
                 'id' => $catalogProduct->id,
+                'slug' => $catalogProduct->slug,
                 'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
                 'image_url' => $catalogProduct->image_url,
                 'description' => $catalogProduct->description,
                 'components' => $this->serializeComponents($catalogProduct->productTemplate->components),
             ],
+        ]);
+    }
+
+    private function showCategory(Category $category): Response
+    {
+        return Inertia::render('catalog/category', [
+            'category' => [
+                'name' => $category->name,
+            ],
+            'catalogProducts' => $category->catalogProducts()
+                ->where('is_active', true)
+                ->with('productTemplate')
+                ->orderBy('created_at')
+                ->get()
+                ->map(fn (CatalogProduct $catalogProduct) => [
+                    'id' => $catalogProduct->id,
+                    'slug' => $catalogProduct->slug,
+                    'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
+                    'image_url' => $catalogProduct->image_url,
+                ]),
         ]);
     }
 
@@ -77,13 +125,5 @@ class CatalogController extends Controller
         }
 
         return $serialized;
-    }
-
-    private function ensurePubliclyVisible(CatalogProduct $catalogProduct): void
-    {
-        abort_unless(
-            $catalogProduct->is_active && $catalogProduct->shop_id === Shop::current()->id,
-            404,
-        );
     }
 }

@@ -68,4 +68,12 @@ class Shop extends Model
     {
         return $this->hasMany(Order::class);
     }
+
+    /**
+     * @return HasMany<Category, $this>
+     */
+    public function categories(): HasMany
+    {
+        return $this->hasMany(Category::class);
+    }
 }

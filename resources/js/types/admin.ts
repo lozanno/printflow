@@ -1,5 +1,13 @@
 export type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 
+export type Category = {
+    id: number;
+    shop_id: number;
+    name: string;
+    slug: string;
+    catalog_products_count?: number;
+};
+
 export type ComponentOption = {
     id: number;
     component_id: number;
@@ -69,10 +77,12 @@ export type CatalogProduct = {
     shop_id: number;
     product_template_id: number;
     name_override: string | null;
+    slug: string | null;
     image_url: string | null;
     description: string | null;
     is_active: boolean;
     product_template?: ProductTemplate;
     pricing_profile?: PricingProfile;
     pricing_profile_exists?: boolean;
+    categories?: Category[];
 };

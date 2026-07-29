@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ImageOff } from 'lucide-react';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { home } from '@/routes';
 import { show } from '@/routes/catalog';
 
 type CatalogProductSummary = {
@@ -10,54 +11,33 @@ type CatalogProductSummary = {
     image_url: string | null;
 };
 
-type CategorySummary = {
-    id: number;
-    name: string;
-    slug: string;
-};
-
-export default function CatalogIndex({
-    shopName,
+export default function CatalogCategory({
+    category,
     catalogProducts,
-    categories,
 }: {
-    shopName: string;
+    category: { name: string };
     catalogProducts: CatalogProductSummary[];
-    categories: CategorySummary[];
 }) {
     return (
         <>
-            <Head title={shopName} />
+            <Head title={category.name} />
 
             <div className="min-h-screen bg-zinc-50 px-6 py-12">
                 <div className="mx-auto max-w-4xl">
-                    <p className="text-sm font-semibold tracking-wide text-zinc-500 uppercase">
-                        {shopName}
-                    </p>
-                    <h1 className="mt-1 text-4xl font-bold tracking-tight text-zinc-900">
-                        ¿Que deseas imprimir?
-                    </h1>
-                    <p className="mt-2 text-zinc-600">
-                        Elige un producto y cotizalo en menos de 30 segundos.
-                    </p>
+                    <Link
+                        href={home()}
+                        className="text-sm text-zinc-500 hover:text-zinc-700"
+                    >
+                        &larr; Volver al catalogo
+                    </Link>
 
-                    {categories.length > 0 && (
-                        <div className="mt-6 flex flex-wrap gap-2">
-                            {categories.map((category) => (
-                                <Link
-                                    key={category.id}
-                                    href={show(category.slug)}
-                                    className="rounded-full border border-zinc-200 bg-white px-4 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-zinc-400"
-                                >
-                                    {category.name}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                    <h1 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900">
+                        {category.name}
+                    </h1>
 
                     {catalogProducts.length === 0 ? (
                         <p className="mt-10 text-zinc-500">
-                            Todavia no hay productos disponibles.
+                            Todavia no hay productos en esta categoria.
                         </p>
                     ) : (
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

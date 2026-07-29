@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { index } from '@/routes/admin/catalog-products';
-import type { CatalogProduct } from '@/types';
+import type { CatalogProduct, Category } from '@/types';
 
 type AvailableOption = {
     id: number;
@@ -51,9 +51,11 @@ const MODIFIER_TYPE_LABELS: Record<string, string> = {
 export default function CatalogProductsEdit({
     catalogProduct,
     availableOptions,
+    availableCategories,
 }: {
     catalogProduct: CatalogProduct;
     availableOptions: AvailableOption[];
+    availableCategories: Category[];
 }) {
     const strategy = catalogProduct.product_template?.pricing_strategy;
     const tiers = catalogProduct.pricing_profile?.tiers ?? [];
@@ -92,6 +94,22 @@ export default function CatalogProductsEdit({
                             </div>
 
                             <div className="grid gap-2">
+                                <Label htmlFor="slug">URL amigable</Label>
+                                <Input
+                                    id="slug"
+                                    name="slug"
+                                    required
+                                    defaultValue={catalogProduct.slug ?? ''}
+                                    className="font-mono"
+                                />
+                                <InputError message={errors.slug} />
+                                <p className="text-xs text-muted-foreground">
+                                    Como se vera en la direccion: localhost/
+                                    {catalogProduct.slug || '...'}
+                                </p>
+                            </div>
+
+                            <div className="grid gap-2">
                                 <Label htmlFor="description">
                                     Descripcion / texto promocional
                                 </Label>
@@ -106,6 +124,40 @@ export default function CatalogProductsEdit({
                                 />
                                 <InputError message={errors.description} />
                             </div>
+
+                            {availableCategories.length > 0 && (
+                                <div className="grid gap-2">
+                                    <Label>Categorias</Label>
+                                    <div className="flex flex-col gap-2">
+                                        {availableCategories.map(
+                                            (category) => (
+                                                <div
+                                                    key={category.id}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <Checkbox
+                                                        id={`category_${category.id}`}
+                                                        name="category_ids[]"
+                                                        value={category.id}
+                                                        defaultChecked={catalogProduct.categories?.some(
+                                                            (c) =>
+                                                                c.id ===
+                                                                category.id,
+                                                        )}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`category_${category.id}`}
+                                                        className="font-normal"
+                                                    >
+                                                        {category.name}
+                                                    </Label>
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                    <InputError message={errors.category_ids} />
+                                </div>
+                            )}
 
                             <div className="grid gap-2">
                                 <Label htmlFor="image">Foto del producto</Label>

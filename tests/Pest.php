@@ -51,17 +51,26 @@ expect()->extend('toBeOne', function () {
 */
 
 /**
+ * Creates the single Shop row the app expects (Shop::current() calls
+ * sole()). Every test that touches shop-scoped data needs exactly one.
+ */
+function makeShop(): Shop
+{
+    return Shop::create([
+        'name' => 'Test Shop',
+        'slug' => 'test-shop-'.uniqid(),
+        'currency' => 'MXN',
+    ]);
+}
+
+/**
  * Creates a Shop, a ProductTemplate on the given strategy, a CatalogProduct
  * activating it, and an empty PricingProfile - the minimum fixture any
  * QuoteEngine or public catalog test needs to build on.
  */
 function makeCatalogProduct(PricingStrategy $strategy): CatalogProduct
 {
-    $shop = Shop::create([
-        'name' => 'Test Shop',
-        'slug' => 'test-shop-'.uniqid(),
-        'currency' => 'MXN',
-    ]);
+    $shop = makeShop();
 
     $template = ProductTemplate::create([
         'code' => 'template-'.uniqid(),
@@ -71,6 +80,7 @@ function makeCatalogProduct(PricingStrategy $strategy): CatalogProduct
 
     $catalogProduct = $shop->catalogProducts()->create([
         'product_template_id' => $template->id,
+        'slug' => 'test-product-'.uniqid(),
         'is_active' => true,
     ]);
 

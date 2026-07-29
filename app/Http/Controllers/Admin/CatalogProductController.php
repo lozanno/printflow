@@ -71,6 +71,7 @@ class CatalogProductController extends Controller
             'productTemplate.components.options',
             'pricingProfile.tiers',
             'pricingProfile.optionModifiers.componentOption.component',
+            'categories',
         ]);
 
         $configuredOptionIds = $catalogProduct->pricingProfile->optionModifiers->pluck('component_option_id');
@@ -100,6 +101,7 @@ class CatalogProductController extends Controller
         return Inertia::render('admin/catalog-products/edit', [
             'catalogProduct' => $catalogProduct,
             'availableOptions' => $availableOptions,
+            'availableCategories' => Shop::current()->categories()->orderBy('name')->get(),
         ]);
     }
 
@@ -109,6 +111,7 @@ class CatalogProductController extends Controller
 
         $attributes = [
             'name_override' => $request->validated('name_override'),
+            'slug' => $request->validated('slug'),
             'description' => $request->validated('description'),
             'is_active' => $request->boolean('is_active'),
         ];
@@ -122,6 +125,8 @@ class CatalogProductController extends Controller
         }
 
         $catalogProduct->update($attributes);
+
+        $catalogProduct->categories()->sync($request->validated('category_ids') ?? []);
 
         $strategy = $catalogProduct->productTemplate->pricing_strategy;
 
