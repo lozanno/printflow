@@ -616,7 +616,7 @@ export default function CatalogShow({
         <>
             <Head title={catalogProduct.name} />
 
-            <div className="min-h-screen bg-zinc-50 px-6 pt-10 pb-28">
+            <div className="px-6 pt-10 pb-28">
                 <div className="mx-auto max-w-3xl">
                     <Link
                         href={home()}

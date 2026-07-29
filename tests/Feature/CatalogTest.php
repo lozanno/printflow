@@ -181,3 +181,48 @@ it('does not let the catch-all slug route shadow the reserved application routes
     $this->get(route('register'))->assertOk();
     $this->get(route('dashboard'))->assertRedirect(route('login'));
 });
+
+it('shows a published static page at its friendly url', function () {
+    $shop = makeShop();
+    $shop->pages()->create([
+        'title' => 'Quienes somos',
+        'slug' => 'quienes-somos',
+        'content' => '<p>Somos una imprenta familiar.</p>',
+        'is_published' => true,
+    ]);
+
+    $this->get('/quienes-somos')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('pages/show')
+            ->where('page.title', 'Quienes somos')
+            ->where('page.content', '<p>Somos una imprenta familiar.</p>')
+        );
+});
+
+it('404s for an unpublished page', function () {
+    $shop = makeShop();
+    $shop->pages()->create([
+        'title' => 'Borrador',
+        'slug' => 'borrador',
+        'is_published' => false,
+    ]);
+
+    $this->get('/borrador')->assertNotFound();
+});
+
+it('resolves a product before a page when slugs would otherwise collide', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->update(['slug' => 'quienes-somos']);
+    // Bypasses the admin cross-table slug validation on purpose, to prove
+    // the controller's resolution order (product, then category, then
+    // page) defensively holds even if a collision ever slipped through.
+    $catalogProduct->shop->pages()->create([
+        'title' => 'Quienes somos',
+        'slug' => 'quienes-somos',
+        'is_published' => true,
+    ]);
+
+    $this->get('/quienes-somos')
+        ->assertInertia(fn ($page) => $page->component('catalog/show'));
+});

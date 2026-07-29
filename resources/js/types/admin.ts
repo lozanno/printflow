@@ -1,5 +1,33 @@
 export type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 
+export type Page = {
+    id: number;
+    shop_id: number;
+    title: string;
+    slug: string;
+    content: string | null;
+    is_published: boolean;
+};
+
+export type Shop = {
+    id: number;
+    name: string;
+    slug: string;
+    currency: string;
+    pickup_line1: string | null;
+    pickup_line2: string | null;
+    pickup_city: string | null;
+    pickup_state: string | null;
+    pickup_postal_code: string | null;
+    pickup_phone: string | null;
+    logo_url: string | null;
+    brand_color: string | null;
+    contact_email: string | null;
+    facebook_url: string | null;
+    instagram_url: string | null;
+    whatsapp_url: string | null;
+};
+
 export type Category = {
     id: number;
     shop_id: number;

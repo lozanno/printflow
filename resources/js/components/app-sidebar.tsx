@@ -1,9 +1,11 @@
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    FileText,
     FolderGit2,
     LayoutGrid,
     Package,
+    Settings,
     ShoppingBag,
     SlidersHorizontal,
     Tag,
@@ -25,7 +27,9 @@ import { dashboard } from '@/routes';
 import { index as catalogProductsIndex } from '@/routes/admin/catalog-products';
 import { index as categoriesIndex } from '@/routes/admin/categories';
 import { index as componentsIndex } from '@/routes/admin/components';
+import { index as pagesIndex } from '@/routes/admin/pages';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
+import { edit as shopSettingsEdit } from '@/routes/admin/settings';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -53,6 +57,16 @@ const mainNavItems: NavItem[] = [
         title: 'Categorias',
         href: categoriesIndex(),
         icon: Tag,
+    },
+    {
+        title: 'Paginas',
+        href: pagesIndex(),
+        icon: FileText,
+    },
+    {
+        title: 'Ajustes de la tienda',
+        href: shopSettingsEdit(),
+        icon: Settings,
     },
 ];
 

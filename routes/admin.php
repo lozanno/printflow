@@ -5,13 +5,20 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ComponentController;
 use App\Http\Controllers\Admin\ComponentOptionController;
 use App\Http\Controllers\Admin\OptionPriceModifierController;
+use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PricingTierController;
 use App\Http\Controllers\Admin\ProductTemplateComponentController;
 use App\Http\Controllers\Admin\ProductTemplateController;
+use App\Http\Controllers\Admin\ShopController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('settings', [ShopController::class, 'edit'])->name('settings.edit');
+    Route::put('settings', [ShopController::class, 'update'])->name('settings.update');
+
     Route::resource('categories', CategoryController::class)->except(['show']);
+
+    Route::resource('pages', PageController::class)->except(['show']);
 
     Route::resource('components', ComponentController::class)->except(['show']);
 

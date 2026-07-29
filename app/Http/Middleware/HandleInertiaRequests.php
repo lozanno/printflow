@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Shop;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,6 +36,11 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // A plain first() rather than Shop::current() (which uses sole())
+        // - this runs on every request, including before the shop is
+        // seeded, and should degrade to null rather than throw.
+        $shop = Shop::query()->first();
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
@@ -42,6 +48,31 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'shop' => $shop ? [
+                'name' => $shop->name,
+                'logo_url' => $shop->logo_url,
+                'brand_color' => $shop->brand_color,
+            ] : null,
+            // Only PublicLayout reads this, but sharing it once here beats
+            // re-querying it from every public controller action.
+            'footer' => $shop ? [
+                'categories' => $shop->categories()
+                    ->orderBy('name')
+                    ->get()
+                    ->map(fn ($category) => ['title' => $category->name, 'slug' => $category->slug]),
+                'pages' => $shop->pages()
+                    ->where('is_published', true)
+                    ->orderBy('title')
+                    ->get()
+                    ->map(fn ($page) => ['title' => $page->title, 'slug' => $page->slug]),
+                'contact' => [
+                    'email' => $shop->contact_email,
+                    'phone' => $shop->pickup_phone,
+                    'facebook_url' => $shop->facebook_url,
+                    'instagram_url' => $shop->instagram_url,
+                    'whatsapp_url' => $shop->whatsapp_url,
+                ],
+            ] : null,
         ];
     }
 }

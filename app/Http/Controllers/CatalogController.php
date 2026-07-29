@@ -6,6 +6,7 @@ use App\Enums\InputType;
 use App\Models\CatalogProduct;
 use App\Models\Category;
 use App\Models\Component;
+use App\Models\Page;
 use App\Models\PricingTier;
 use App\Models\Shop;
 use Illuminate\Support\Collection;
@@ -56,9 +57,19 @@ class CatalogController extends Controller
             ->where('slug', $slug)
             ->first();
 
-        abort_unless($category !== null, 404);
+        if ($category) {
+            return $this->showCategory($category);
+        }
 
-        return $this->showCategory($category);
+        $page = Page::query()
+            ->where('shop_id', $shop->id)
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->first();
+
+        abort_unless($page !== null, 404);
+
+        return $this->showPage($page);
     }
 
     private function showProduct(CatalogProduct $catalogProduct): Response
@@ -106,6 +117,16 @@ class CatalogController extends Controller
                     'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
                     'image_url' => $catalogProduct->image_url,
                 ]),
+        ]);
+    }
+
+    private function showPage(Page $page): Response
+    {
+        return Inertia::render('pages/show', [
+            'page' => [
+                'title' => $page->title,
+                'content' => $page->content,
+            ],
         ]);
     }
 

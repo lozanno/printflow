@@ -29,7 +29,7 @@ export default function CatalogIndex({
         <>
             <Head title={shopName} />
 
-            <div className="min-h-screen bg-zinc-50 px-6 py-12">
+            <div className="px-6 py-12">
                 <div className="mx-auto max-w-4xl">
                     <p className="text-sm font-semibold tracking-wide text-zinc-500 uppercase">
                         {shopName}

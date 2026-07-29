@@ -22,7 +22,7 @@ export default function CatalogCategory({
         <>
             <Head title={category.name} />
 
-            <div className="min-h-screen bg-zinc-50 px-6 py-12">
+            <div className="px-6 py-12">
                 <div className="mx-auto max-w-4xl">
                     <Link
                         href={home()}
