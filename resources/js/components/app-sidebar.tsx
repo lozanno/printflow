@@ -4,6 +4,7 @@ import {
     FolderGit2,
     LayoutGrid,
     Package,
+    ShoppingBag,
     SlidersHorizontal,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -20,6 +21,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as catalogProductsIndex } from '@/routes/admin/catalog-products';
 import { index as componentsIndex } from '@/routes/admin/components';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import type { NavItem } from '@/types';
@@ -39,6 +41,11 @@ const mainNavItems: NavItem[] = [
         title: 'Plantillas de producto',
         href: productTemplatesIndex(),
         icon: Package,
+    },
+    {
+        title: 'Catalogo',
+        href: catalogProductsIndex(),
+        icon: ShoppingBag,
     },
 ];
 

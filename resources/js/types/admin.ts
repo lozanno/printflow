@@ -35,3 +35,41 @@ export type ProductTemplate = {
     components_count?: number;
     components?: AttachedComponent[];
 };
+
+export type PricingTier = {
+    id: number;
+    pricing_profile_id: number;
+    min_quantity: number;
+    max_quantity: number | null;
+    unit_price: string;
+};
+
+export type ModifierType = 'FIXED_ADD' | 'PERCENT_MULTIPLY' | 'PER_UNIT_ADD';
+
+export type OptionPriceModifier = {
+    id: number;
+    pricing_profile_id: number;
+    component_option_id: number;
+    modifier_type: ModifierType;
+    value: string;
+    component_option?: ComponentOption & { component?: Component };
+};
+
+export type PricingProfile = {
+    id: number;
+    catalog_product_id: number;
+    params: Record<string, string> | null;
+    tiers?: PricingTier[];
+    option_modifiers?: OptionPriceModifier[];
+};
+
+export type CatalogProduct = {
+    id: number;
+    shop_id: number;
+    product_template_id: number;
+    name_override: string | null;
+    is_active: boolean;
+    product_template?: ProductTemplate;
+    pricing_profile?: PricingProfile;
+    pricing_profile_exists?: boolean;
+};

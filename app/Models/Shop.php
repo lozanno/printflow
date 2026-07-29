@@ -35,6 +35,17 @@ use Illuminate\Support\Carbon;
 class Shop extends Model
 {
     /**
+     * Resolves the shop the admin panel is managing. Single-tenant for now
+     * (exactly one row is expected) - this is the one seam to change when
+     * the app grows into multi-tenant and needs to resolve the shop from
+     * the authenticated user instead.
+     */
+    public static function current(): self
+    {
+        return self::sole();
+    }
+
+    /**
      * @return HasMany<CatalogProduct, $this>
      */
     public function catalogProducts(): HasMany
