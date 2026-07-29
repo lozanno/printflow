@@ -35,31 +35,30 @@ import { Textarea } from '@/components/ui/textarea';
 import { index } from '@/routes/admin/catalog-products';
 import type { CatalogProduct, Category } from '@/types';
 
-type AvailableOption = {
+type OptionModifier = {
     id: number;
-    label: string;
+    modifier_type: string;
     value: string;
-    component_label: string;
-};
-
-const MODIFIER_TYPE_LABELS: Record<string, string> = {
-    FIXED_ADD: 'Suma fija',
-    PERCENT_MULTIPLY: 'Multiplicador porcentual',
-    PER_UNIT_ADD: 'Suma por unidad',
 };
 
 export default function CatalogProductsEdit({
     catalogProduct,
-    availableOptions,
+    optionModifiersByOptionId,
     availableCategories,
 }: {
     catalogProduct: CatalogProduct;
-    availableOptions: AvailableOption[];
+    optionModifiersByOptionId: Record<number, OptionModifier>;
     availableCategories: Category[];
 }) {
     const strategy = catalogProduct.product_template?.pricing_strategy;
     const tiers = catalogProduct.pricing_profile?.tiers ?? [];
-    const modifiers = catalogProduct.pricing_profile?.option_modifiers ?? [];
+    const priceableComponents = (
+        catalogProduct.product_template?.components ?? []
+    ).filter(
+        (component) =>
+            component.input_type === 'CHOICE' &&
+            (component.options?.length ?? 0) > 0,
+    );
     const displayName =
         catalogProduct.name_override ?? catalogProduct.product_template?.name;
 
@@ -391,199 +390,182 @@ export default function CatalogProductsEdit({
                     </Card>
                 )}
 
-                {(modifiers.length > 0 || availableOptions.length > 0) && (
+                {priceableComponents.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Modificadores por opcion</CardTitle>
+                            <CardTitle>Precios por opcion</CardTitle>
                             <CardDescription>
-                                Cuanto cambia el precio cuando el cliente elige
-                                cada opcion (ej. laminado brillante, entrega
-                                urgente).
+                                Cuanto cambia el precio cuando el cliente
+                                elige cada opcion. Dejalo vacio si la opcion
+                                no cambia el precio.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            {modifiers.length > 0 ? (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Opcion</TableHead>
-                                            <TableHead>Tipo</TableHead>
-                                            <TableHead>Valor</TableHead>
-                                            <TableHead className="text-right">
-                                                Acciones
-                                            </TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {modifiers.map((modifier) => (
-                                            <TableRow key={modifier.id}>
-                                                <TableCell>
-                                                    {
-                                                        modifier
-                                                            .component_option
-                                                            ?.component?.label
-                                                    }
-                                                    :{' '}
-                                                    {
-                                                        modifier
-                                                            .component_option
-                                                            ?.label
-                                                    }
-                                                </TableCell>
-                                                <TableCell>
-                                                    {
-                                                        MODIFIER_TYPE_LABELS[
-                                                            modifier
-                                                                .modifier_type
-                                                        ]
-                                                    }
-                                                </TableCell>
-                                                <TableCell>
-                                                    {modifier.value}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Form
-                                                        {...OptionPriceModifierController.destroy.form(
-                                                            [
-                                                                catalogProduct.id,
-                                                                modifier.id,
-                                                            ],
-                                                        )}
+                        <CardContent className="space-y-8">
+                            {priceableComponents.map((component) => (
+                                <div key={component.id} className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                        {component.label}
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {(component.options ?? []).map(
+                                            (option) => {
+                                                const existing =
+                                                    optionModifiersByOptionId[
+                                                        option.id
+                                                    ];
+
+                                                return (
+                                                    <div
+                                                        key={option.id}
+                                                        className="flex flex-wrap items-end gap-3 border-t pt-4 first:border-t-0 first:pt-0"
                                                     >
-                                                        {({
-                                                            processing:
-                                                                deleting,
-                                                        }) => (
-                                                            <Button
-                                                                type="submit"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                disabled={
-                                                                    deleting
-                                                                }
-                                                                aria-label="Eliminar modificador"
+                                                        <Form
+                                                            {...(existing
+                                                                ? OptionPriceModifierController.update.form(
+                                                                      [
+                                                                          catalogProduct.id,
+                                                                          existing.id,
+                                                                      ],
+                                                                  )
+                                                                : OptionPriceModifierController.store.form(
+                                                                      catalogProduct.id,
+                                                                  ))}
+                                                            className="flex flex-1 flex-wrap items-end gap-3"
+                                                        >
+                                                            {({
+                                                                processing,
+                                                                errors,
+                                                            }) => (
+                                                                <>
+                                                                    {!existing && (
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name="component_option_id"
+                                                                            value={
+                                                                                option.id
+                                                                            }
+                                                                        />
+                                                                    )}
+
+                                                                    <div className="min-w-32 flex-1 pb-2 text-sm font-medium">
+                                                                        {
+                                                                            option.label
+                                                                        }
+                                                                    </div>
+
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`modifier_type_${option.id}`}
+                                                                        >
+                                                                            Tipo
+                                                                        </Label>
+                                                                        <Select
+                                                                            name="modifier_type"
+                                                                            defaultValue={
+                                                                                existing?.modifier_type ??
+                                                                                'FIXED_ADD'
+                                                                            }
+                                                                        >
+                                                                            <SelectTrigger
+                                                                                id={`modifier_type_${option.id}`}
+                                                                                className="w-44"
+                                                                            >
+                                                                                <SelectValue />
+                                                                            </SelectTrigger>
+                                                                            <SelectContent>
+                                                                                <SelectItem value="FIXED_ADD">
+                                                                                    Suma
+                                                                                    fija
+                                                                                </SelectItem>
+                                                                                <SelectItem value="PERCENT_MULTIPLY">
+                                                                                    Multiplicador
+                                                                                    %
+                                                                                </SelectItem>
+                                                                                <SelectItem value="PER_UNIT_ADD">
+                                                                                    Suma
+                                                                                    por
+                                                                                    unidad
+                                                                                </SelectItem>
+                                                                            </SelectContent>
+                                                                        </Select>
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.modifier_type
+                                                                            }
+                                                                        />
+                                                                    </div>
+
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`value_${option.id}`}
+                                                                        >
+                                                                            Valor
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`value_${option.id}`}
+                                                                            name="value"
+                                                                            type="number"
+                                                                            step="0.0001"
+                                                                            defaultValue={
+                                                                                existing?.value ??
+                                                                                ''
+                                                                            }
+                                                                            className="w-28"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.value
+                                                                            }
+                                                                        />
+                                                                    </div>
+
+                                                                    <Button
+                                                                        type="submit"
+                                                                        variant="outline"
+                                                                        disabled={
+                                                                            processing
+                                                                        }
+                                                                    >
+                                                                        Guardar
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                        </Form>
+
+                                                        {existing && (
+                                                            <Form
+                                                                {...OptionPriceModifierController.destroy.form(
+                                                                    [
+                                                                        catalogProduct.id,
+                                                                        existing.id,
+                                                                    ],
+                                                                )}
                                                             >
-                                                                <Trash2 />
-                                                            </Button>
+                                                                {({
+                                                                    processing:
+                                                                        deleting,
+                                                                }) => (
+                                                                    <Button
+                                                                        type="submit"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        disabled={
+                                                                            deleting
+                                                                        }
+                                                                        aria-label={`Quitar precio de ${option.label}`}
+                                                                    >
+                                                                        <Trash2 />
+                                                                    </Button>
+                                                                )}
+                                                            </Form>
                                                         )}
-                                                    </Form>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">
-                                    Todavia no hay modificadores.
-                                </p>
-                            )}
-
-                            {availableOptions.length > 0 && (
-                                <Form
-                                    {...OptionPriceModifierController.store.form(
-                                        catalogProduct.id,
-                                    )}
-                                    resetOnSuccess
-                                    className="flex items-end gap-3 border-t pt-6"
-                                >
-                                    {({ processing, errors }) => (
-                                        <>
-                                            <div className="grid flex-1 gap-2">
-                                                <Label htmlFor="component_option_id">
-                                                    Opcion
-                                                </Label>
-                                                <Select
-                                                    name="component_option_id"
-                                                    required
-                                                >
-                                                    <SelectTrigger id="component_option_id">
-                                                        <SelectValue placeholder="Selecciona una opcion" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {availableOptions.map(
-                                                            (option) => (
-                                                                <SelectItem
-                                                                    key={
-                                                                        option.id
-                                                                    }
-                                                                    value={option.id.toString()}
-                                                                >
-                                                                    {
-                                                                        option.component_label
-                                                                    }
-                                                                    :{' '}
-                                                                    {
-                                                                        option.label
-                                                                    }
-                                                                </SelectItem>
-                                                            ),
-                                                        )}
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={
-                                                        errors.component_option_id
-                                                    }
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="modifier_type">
-                                                    Tipo
-                                                </Label>
-                                                <Select
-                                                    name="modifier_type"
-                                                    required
-                                                >
-                                                    <SelectTrigger id="modifier_type">
-                                                        <SelectValue placeholder="Tipo" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="FIXED_ADD">
-                                                            Suma fija
-                                                        </SelectItem>
-                                                        <SelectItem value="PERCENT_MULTIPLY">
-                                                            Multiplicador %
-                                                        </SelectItem>
-                                                        <SelectItem value="PER_UNIT_ADD">
-                                                            Suma por unidad
-                                                        </SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <InputError
-                                                    message={
-                                                        errors.modifier_type
-                                                    }
-                                                />
-                                            </div>
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="value">
-                                                    Valor
-                                                </Label>
-                                                <Input
-                                                    id="value"
-                                                    name="value"
-                                                    type="number"
-                                                    step="0.0001"
-                                                    required
-                                                    className="w-28"
-                                                />
-                                                <InputError
-                                                    message={errors.value}
-                                                />
-                                            </div>
-
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                            >
-                                                Agregar
-                                            </Button>
-                                        </>
-                                    )}
-                                </Form>
-                            )}
+                                                    </div>
+                                                );
+                                            },
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                 )}

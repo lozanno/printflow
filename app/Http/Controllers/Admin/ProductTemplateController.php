@@ -45,6 +45,9 @@ class ProductTemplateController extends Controller
             'productTemplate' => $productTemplate->load('components'),
             'availableComponents' => Component::query()
                 ->whereNotIn('id', $attachedComponentIds)
+                // "quantity" is reserved for the PricingTier-driven picker,
+                // see StoreComponentRequest.
+                ->where('code', '!=', 'quantity')
                 ->orderBy('label')
                 ->get(),
         ]);

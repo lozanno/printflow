@@ -29,8 +29,8 @@ it('only lists active catalog products', function () {
 
 it('shows the component schema for an active product', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Choice, options: [
-        ['100', '100 piezas'],
+    attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
     ]);
 
     $this->get("/{$catalogProduct->slug}")
@@ -39,8 +39,27 @@ it('shows the component schema for an active product', function () {
             ->component('catalog/show')
             ->where('catalogProduct.id', $catalogProduct->id)
             ->has('catalogProduct.components', 1)
-            ->where('catalogProduct.components.0.code', 'quantity')
+            ->where('catalogProduct.components.0.code', 'finish')
             ->has('catalogProduct.components.0.options', 1)
+        );
+});
+
+it('builds the quantity table from pricing tiers instead of a component', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->pricingProfile->tiers()->createMany([
+        ['min_quantity' => 100, 'max_quantity' => 249, 'unit_price' => 1.50],
+        ['min_quantity' => 250, 'max_quantity' => null, 'unit_price' => 1.10],
+    ]);
+
+    $this->get("/{$catalogProduct->slug}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('catalog/show')
+            ->where('catalogProduct.pricing_strategy', 'PER_UNIT_TIERED')
+            ->has('catalogProduct.pricing_tiers', 2)
+            ->where('catalogProduct.pricing_tiers.0.min_quantity', 100)
+            ->where('catalogProduct.pricing_tiers.0.unit_price', 1.5)
+            ->where('catalogProduct.components', [])
         );
 });
 

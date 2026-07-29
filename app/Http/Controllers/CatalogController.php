@@ -6,6 +6,7 @@ use App\Enums\InputType;
 use App\Models\CatalogProduct;
 use App\Models\Category;
 use App\Models\Component;
+use App\Models\PricingTier;
 use App\Models\Shop;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -62,7 +63,7 @@ class CatalogController extends Controller
 
     private function showProduct(CatalogProduct $catalogProduct): Response
     {
-        $catalogProduct->load('productTemplate.components.options');
+        $catalogProduct->load('productTemplate.components.options', 'pricingProfile.tiers', 'shop');
 
         return Inertia::render('catalog/show', [
             'catalogProduct' => [
@@ -71,7 +72,16 @@ class CatalogController extends Controller
                 'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
                 'image_url' => $catalogProduct->image_url,
                 'description' => $catalogProduct->description,
+                'currency' => $catalogProduct->shop->currency,
+                'pricing_strategy' => $catalogProduct->productTemplate->pricing_strategy,
                 'components' => $this->serializeComponents($catalogProduct->productTemplate->components),
+                'pricing_tiers' => $catalogProduct->pricingProfile?->tiers
+                    ->map(fn (PricingTier $tier) => [
+                        'min_quantity' => $tier->min_quantity,
+                        'max_quantity' => $tier->max_quantity,
+                        'unit_price' => (float) $tier->unit_price,
+                    ])
+                    ->all() ?? [],
             ],
         ]);
     }

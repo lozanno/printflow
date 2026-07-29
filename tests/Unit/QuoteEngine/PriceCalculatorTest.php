@@ -10,10 +10,6 @@ use App\QuoteEngine\PriceCalculator;
 
 it('calculates a tiered price using the tier that covers the quantity', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Choice, options: [
-        ['100', '100 piezas'],
-        ['500', '500 piezas'],
-    ]);
 
     $catalogProduct->pricingProfile->tiers()->createMany([
         ['min_quantity' => 100, 'max_quantity' => 249, 'unit_price' => 1.50],
@@ -30,13 +26,22 @@ it('calculates a tiered price using the tier that covers the quantity', function
 
 it('throws when the quantity falls outside every tier', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Number);
 
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 100, 'max_quantity' => 249, 'unit_price' => 1.50,
     ]);
 
     (new PriceCalculator)->calculate($catalogProduct->fresh(), ['quantity' => 50]);
+})->throws(QuoteCannotBeCalculatedException::class);
+
+it('throws when quantity is missing entirely for a per_unit_tiered product', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+
+    $catalogProduct->pricingProfile->tiers()->create([
+        'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
+    ]);
+
+    (new PriceCalculator)->calculate($catalogProduct->fresh(), []);
 })->throws(QuoteCannotBeCalculatedException::class);
 
 it('calculates an area-based price', function () {
@@ -76,7 +81,6 @@ it('throws when an area strategy is missing its rate', function () {
 it('applies a fixed_add modifier once regardless of quantity', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $template = $catalogProduct->productTemplate;
-    attachComponent($template, 'quantity', 'Cantidad', InputType::Number);
     $finish = attachComponent($template, 'finish', 'Acabado', InputType::Choice, options: [
         ['gloss', 'Laminado brillante'],
     ]);
@@ -107,7 +111,6 @@ it('applies a fixed_add modifier once regardless of quantity', function () {
 it('scales a per_unit_add modifier by the quantity', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $template = $catalogProduct->productTemplate;
-    attachComponent($template, 'quantity', 'Cantidad', InputType::Number);
     $finish = attachComponent($template, 'finish', 'Acabado', InputType::Choice, options: [
         ['gloss', 'Laminado brillante'],
     ]);
@@ -134,7 +137,6 @@ it('scales a per_unit_add modifier by the quantity', function () {
 it('supports a negative per_unit_add value as a volume discount', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $template = $catalogProduct->productTemplate;
-    attachComponent($template, 'quantity', 'Cantidad', InputType::Number);
     $quantityTier = attachComponent($template, 'volume', 'Volumen', InputType::Choice, options: [
         ['high', 'Mas de 500'],
     ]);
@@ -162,7 +164,6 @@ it('supports a negative per_unit_add value as a volume discount', function () {
 it('compounds a percent_multiply modifier on top of additive modifiers', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $template = $catalogProduct->productTemplate;
-    attachComponent($template, 'quantity', 'Cantidad', InputType::Number);
     $finish = attachComponent($template, 'finish', 'Acabado', InputType::Choice, options: [
         ['gloss', 'Laminado brillante'],
     ]);
@@ -203,18 +204,19 @@ it('compounds a percent_multiply modifier on top of additive modifiers', functio
 
 it('throws when a required component has no selection', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Number);
+    attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
+    ]);
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
 
-    (new PriceCalculator)->calculate($catalogProduct->fresh(), []);
+    (new PriceCalculator)->calculate($catalogProduct->fresh(), ['quantity' => 10]);
 })->throws(QuoteCannotBeCalculatedException::class);
 
 it('ignores an optional component that has no selection', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $template = $catalogProduct->productTemplate;
-    attachComponent($template, 'quantity', 'Cantidad', InputType::Number);
     attachComponent($template, 'notes', 'Notas', InputType::Number, required: false);
 
     $catalogProduct->pricingProfile->tiers()->create([
@@ -228,14 +230,17 @@ it('ignores an optional component that has no selection', function () {
 
 it('throws when a choice selection does not match any configured option', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Choice, options: [
-        ['100', '100 piezas'],
+    attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
     ]);
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
 
-    (new PriceCalculator)->calculate($catalogProduct->fresh(), ['quantity' => 'nonexistent']);
+    (new PriceCalculator)->calculate($catalogProduct->fresh(), [
+        'quantity' => 1,
+        'finish' => 'nonexistent',
+    ]);
 })->throws(QuoteCannotBeCalculatedException::class);
 
 it('throws when the catalog product has no pricing profile', function () {

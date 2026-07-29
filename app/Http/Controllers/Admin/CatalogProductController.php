@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\InputType;
 use App\Enums\PricingStrategy;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCatalogProductRequest;
@@ -74,33 +73,20 @@ class CatalogProductController extends Controller
             'categories',
         ]);
 
-        $configuredOptionIds = $catalogProduct->pricingProfile->optionModifiers->pluck('component_option_id');
+        /** @var array<int, array{id: int, modifier_type: string, value: string}> $optionModifiersByOptionId */
+        $optionModifiersByOptionId = [];
 
-        /** @var list<array{id: int, label: string, value: string, component_label: string}> $availableOptions */
-        $availableOptions = [];
-
-        foreach ($catalogProduct->productTemplate->components as $component) {
-            if ($component->input_type !== InputType::Choice) {
-                continue;
-            }
-
-            foreach ($component->options as $option) {
-                if ($configuredOptionIds->contains($option->id)) {
-                    continue;
-                }
-
-                $availableOptions[] = [
-                    'id' => $option->id,
-                    'label' => $option->label,
-                    'value' => $option->value,
-                    'component_label' => $component->label,
-                ];
-            }
+        foreach ($catalogProduct->pricingProfile->optionModifiers as $modifier) {
+            $optionModifiersByOptionId[$modifier->component_option_id] = [
+                'id' => $modifier->id,
+                'modifier_type' => $modifier->modifier_type->value,
+                'value' => $modifier->value,
+            ];
         }
 
         return Inertia::render('admin/catalog-products/edit', [
             'catalogProduct' => $catalogProduct,
-            'availableOptions' => $availableOptions,
+            'optionModifiersByOptionId' => $optionModifiersByOptionId,
             'availableCategories' => Shop::current()->categories()->orderBy('name')->get(),
         ]);
     }

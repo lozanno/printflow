@@ -43,6 +43,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('catalog-products/{catalog_product}/option-modifiers', [OptionPriceModifierController::class, 'store'])
         ->name('catalog-products.option-modifiers.store');
 
+    Route::put('catalog-products/{catalog_product}/option-modifiers/{modifier}', [OptionPriceModifierController::class, 'update'])
+        ->name('catalog-products.option-modifiers.update');
+
     Route::delete('catalog-products/{catalog_product}/option-modifiers/{modifier}', [OptionPriceModifierController::class, 'destroy'])
         ->name('catalog-products.option-modifiers.destroy');
 });

@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 import ComponentController from '@/actions/App/Http/Controllers/Admin/ComponentController';
 import ComponentOptionController from '@/actions/App/Http/Controllers/Admin/ComponentOptionController';
 import Heading from '@/components/heading';
@@ -37,6 +38,10 @@ export default function ComponentsEdit({
 }: {
     component: Component;
 }) {
+    const [editingOptionId, setEditingOptionId] = useState<number | null>(
+        null,
+    );
+
     return (
         <>
             <Head title={`Editar ${component.label}`} />
@@ -134,56 +139,182 @@ export default function ComponentsEdit({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {component.options.map((option) => (
-                                            <TableRow key={option.id}>
-                                                <TableCell>
-                                                    {option.image_url ? (
-                                                        <img
-                                                            src={
-                                                                option.image_url
+                                        {component.options.map((option) =>
+                                            editingOptionId === option.id ? (
+                                                <TableRow key={option.id}>
+                                                    <TableCell colSpan={4}>
+                                                        <Form
+                                                            {...ComponentOptionController.update.form(
+                                                                [
+                                                                    component.id,
+                                                                    option.id,
+                                                                ],
+                                                            )}
+                                                            onSuccess={() =>
+                                                                setEditingOptionId(
+                                                                    null,
+                                                                )
                                                             }
-                                                            alt=""
-                                                            className="h-10 w-10 rounded border object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded border border-dashed bg-muted" />
-                                                    )}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {option.label}
-                                                </TableCell>
-                                                <TableCell className="font-mono text-xs text-muted-foreground">
-                                                    {option.value}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Form
-                                                        {...ComponentOptionController.destroy.form(
-                                                            [
-                                                                component.id,
-                                                                option.id,
-                                                            ],
+                                                            className="flex flex-wrap items-end gap-3 py-2"
+                                                        >
+                                                            {({
+                                                                processing,
+                                                                errors,
+                                                            }) => (
+                                                                <>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_label_${option.id}`}
+                                                                        >
+                                                                            Etiqueta
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_label_${option.id}`}
+                                                                            name="label"
+                                                                            required
+                                                                            defaultValue={
+                                                                                option.label
+                                                                            }
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.label
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_value_${option.id}`}
+                                                                        >
+                                                                            Valor
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_value_${option.id}`}
+                                                                            name="value"
+                                                                            required
+                                                                            defaultValue={
+                                                                                option.value
+                                                                            }
+                                                                            className="font-mono"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.value
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_image_${option.id}`}
+                                                                        >
+                                                                            Imagen
+                                                                            (opcional)
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_image_${option.id}`}
+                                                                            name="image"
+                                                                            type="file"
+                                                                            accept="image/jpeg,image/png,image/webp"
+                                                                            className="max-w-52"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.image
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <Button
+                                                                        type="submit"
+                                                                        disabled={
+                                                                            processing
+                                                                        }
+                                                                    >
+                                                                        Guardar
+                                                                    </Button>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        aria-label="Cancelar"
+                                                                        onClick={() =>
+                                                                            setEditingOptionId(
+                                                                                null,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <X />
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                        </Form>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                <TableRow key={option.id}>
+                                                    <TableCell>
+                                                        {option.image_url ? (
+                                                            <img
+                                                                src={
+                                                                    option.image_url
+                                                                }
+                                                                alt=""
+                                                                className="h-10 w-10 rounded border object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-10 w-10 rounded border border-dashed bg-muted" />
                                                         )}
-                                                    >
-                                                        {({
-                                                            processing:
-                                                                deleting,
-                                                        }) => (
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {option.label}
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-xs text-muted-foreground">
+                                                        {option.value}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
                                                             <Button
-                                                                type="submit"
+                                                                type="button"
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                disabled={
-                                                                    deleting
+                                                                aria-label={`Editar ${option.label}`}
+                                                                onClick={() =>
+                                                                    setEditingOptionId(
+                                                                        option.id,
+                                                                    )
                                                                 }
-                                                                aria-label={`Eliminar ${option.label}`}
                                                             >
-                                                                <Trash2 />
+                                                                <Pencil />
                                                             </Button>
-                                                        )}
-                                                    </Form>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                            <Form
+                                                                {...ComponentOptionController.destroy.form(
+                                                                    [
+                                                                        component.id,
+                                                                        option.id,
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                {({
+                                                                    processing:
+                                                                        deleting,
+                                                                }) => (
+                                                                    <Button
+                                                                        type="submit"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        disabled={
+                                                                            deleting
+                                                                        }
+                                                                        aria-label={`Eliminar ${option.label}`}
+                                                                    >
+                                                                        <Trash2 />
+                                                                    </Button>
+                                                                )}
+                                                            </Form>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ),
+                                        )}
                                     </TableBody>
                                 </Table>
                             ) : (

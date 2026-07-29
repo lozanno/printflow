@@ -22,6 +22,7 @@ class UpdateComponentRequest extends FormRequest
                 'max:255',
                 'alpha_dash',
                 Rule::unique('components', 'code')->ignore($this->route('component')),
+                Rule::notIn(['quantity']),
             ],
             'label' => ['required', 'string', 'max:255'],
             'input_type' => ['required', new Enum(InputType::class)],

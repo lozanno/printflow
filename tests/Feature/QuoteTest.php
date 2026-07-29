@@ -5,9 +5,6 @@ use App\Enums\PricingStrategy;
 
 it('returns a computed total for a valid tiered selection', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Choice, options: [
-        ['500', '500 piezas'],
-    ]);
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1.10,
     ]);
@@ -35,9 +32,8 @@ it('returns a computed total for a valid area-based selection', function () {
         ->assertJson(['total' => 590.0]);
 });
 
-it('returns a clean 422 when a required selection is missing', function () {
+it('returns a clean 422 when the quantity is missing', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Number);
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
@@ -49,15 +45,15 @@ it('returns a clean 422 when a required selection is missing', function () {
 
 it('returns a clean 422 for a choice value that does not exist', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
-    attachComponent($catalogProduct->productTemplate, 'quantity', 'Cantidad', InputType::Choice, options: [
-        ['100', '100 piezas'],
+    attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
     ]);
     $catalogProduct->pricingProfile->tiers()->create([
         'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1,
     ]);
 
     $this->postJson("/{$catalogProduct->slug}/cotizar", [
-        'selections' => ['quantity' => 'not-a-real-option'],
+        'selections' => ['quantity' => 100, 'finish' => 'not-a-real-option'],
     ])->assertStatus(422);
 });
 
