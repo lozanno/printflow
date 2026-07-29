@@ -1,0 +1,245 @@
+import { Form, Head, Link } from '@inertiajs/react';
+import { Trash2 } from 'lucide-react';
+import ComponentController from '@/actions/App/Http/Controllers/Admin/ComponentController';
+import ComponentOptionController from '@/actions/App/Http/Controllers/Admin/ComponentOptionController';
+import Heading from '@/components/heading';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import { index } from '@/routes/admin/components';
+import type { Component } from '@/types';
+
+export default function ComponentsEdit({
+    component,
+}: {
+    component: Component;
+}) {
+    return (
+        <>
+            <Head title={`Editar ${component.label}`} />
+
+            <div className="max-w-2xl space-y-8 p-4">
+                <Heading
+                    title={component.label}
+                    description="Edita el componente y administra sus opciones."
+                />
+
+                <Form
+                    {...ComponentController.update.form(component.id)}
+                    className="space-y-6"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="label">Etiqueta</Label>
+                                <Input
+                                    id="label"
+                                    name="label"
+                                    required
+                                    defaultValue={component.label}
+                                />
+                                <InputError message={errors.label} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="code">Codigo interno</Label>
+                                <Input
+                                    id="code"
+                                    name="code"
+                                    required
+                                    defaultValue={component.code}
+                                    className="font-mono"
+                                />
+                                <InputError message={errors.code} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="input_type">
+                                    Tipo de campo
+                                </Label>
+                                <Select
+                                    name="input_type"
+                                    required
+                                    defaultValue={component.input_type}
+                                >
+                                    <SelectTrigger id="input_type">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="CHOICE">
+                                            Opciones (elegir una)
+                                        </SelectItem>
+                                        <SelectItem value="NUMBER">
+                                            Numero
+                                        </SelectItem>
+                                        <SelectItem value="DIMENSIONS">
+                                            Dimensiones (ancho x alto)
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <InputError message={errors.input_type} />
+                            </div>
+
+                            <Button disabled={processing}>
+                                Guardar cambios
+                            </Button>
+                        </>
+                    )}
+                </Form>
+
+                {component.input_type === 'CHOICE' && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Opciones</CardTitle>
+                            <CardDescription>
+                                Los valores que el cliente podra elegir para
+                                este componente.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {component.options &&
+                            component.options.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Etiqueta</TableHead>
+                                            <TableHead>Valor</TableHead>
+                                            <TableHead className="text-right">
+                                                Acciones
+                                            </TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {component.options.map((option) => (
+                                            <TableRow key={option.id}>
+                                                <TableCell>
+                                                    {option.label}
+                                                </TableCell>
+                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                                    {option.value}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Form
+                                                        {...ComponentOptionController.destroy.form(
+                                                            [
+                                                                component.id,
+                                                                option.id,
+                                                            ],
+                                                        )}
+                                                    >
+                                                        {({
+                                                            processing:
+                                                                deleting,
+                                                        }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                disabled={
+                                                                    deleting
+                                                                }
+                                                                aria-label={`Eliminar ${option.label}`}
+                                                            >
+                                                                <Trash2 />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    Todavia no hay opciones.
+                                </p>
+                            )}
+
+                            <Form
+                                {...ComponentOptionController.store.form(
+                                    component.id,
+                                )}
+                                resetOnSuccess
+                                className="flex items-end gap-3 border-t pt-6"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="grid flex-1 gap-2">
+                                            <Label htmlFor="option_label">
+                                                Etiqueta
+                                            </Label>
+                                            <Input
+                                                id="option_label"
+                                                name="label"
+                                                required
+                                                placeholder="Laminado brillante"
+                                            />
+                                            <InputError
+                                                message={errors.label}
+                                            />
+                                        </div>
+                                        <div className="grid flex-1 gap-2">
+                                            <Label htmlFor="option_value">
+                                                Valor
+                                            </Label>
+                                            <Input
+                                                id="option_value"
+                                                name="value"
+                                                required
+                                                placeholder="gloss"
+                                                className="font-mono"
+                                            />
+                                            <InputError
+                                                message={errors.value}
+                                            />
+                                        </div>
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                        >
+                                            Agregar
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+                        </CardContent>
+                    </Card>
+                )}
+
+                <Button variant="outline" asChild>
+                    <Link href={index()}>Volver a componentes</Link>
+                </Button>
+            </div>
+        </>
+    );
+}
+
+ComponentsEdit.layout = {
+    breadcrumbs: [
+        { title: 'Componentes', href: index() },
+        { title: 'Editar', href: '' },
+    ],
+};
