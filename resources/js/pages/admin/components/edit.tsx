@@ -41,6 +41,7 @@ export default function ComponentsEdit({
     const [editingOptionId, setEditingOptionId] = useState<number | null>(
         null,
     );
+    const isDimensions = component.input_type === 'DIMENSIONS';
 
     return (
         <>
@@ -115,13 +116,18 @@ export default function ComponentsEdit({
                     )}
                 </Form>
 
-                {component.input_type === 'CHOICE' && (
+                {(component.input_type === 'CHOICE' || isDimensions) && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Opciones</CardTitle>
+                            <CardTitle>
+                                {isDimensions
+                                    ? 'Tamanos preestablecidos'
+                                    : 'Opciones'}
+                            </CardTitle>
                             <CardDescription>
-                                Los valores que el cliente podra elegir para
-                                este componente.
+                                {isDimensions
+                                    ? 'Opcional: atajos de tamano que el cliente puede elegir en vez de escribir ancho y alto a mano. Si no agregas ninguno, solo vera los campos de ancho/alto.'
+                                    : 'Los valores que el cliente podra elegir para este componente.'}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
@@ -130,7 +136,9 @@ export default function ComponentsEdit({
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>Imagen</TableHead>
+                                            {!isDimensions && (
+                                                <TableHead>Imagen</TableHead>
+                                            )}
                                             <TableHead>Etiqueta</TableHead>
                                             <TableHead>Valor</TableHead>
                                             <TableHead className="text-right">
@@ -142,7 +150,13 @@ export default function ComponentsEdit({
                                         {component.options.map((option, index) =>
                                             editingOptionId === option.id ? (
                                                 <TableRow key={option.id}>
-                                                    <TableCell colSpan={4}>
+                                                    <TableCell
+                                                        colSpan={
+                                                            isDimensions
+                                                                ? 3
+                                                                : 4
+                                                        }
+                                                    >
                                                         <Form
                                                             {...ComponentOptionController.update.form(
                                                                 [
@@ -203,26 +217,28 @@ export default function ComponentsEdit({
                                                                             }
                                                                         />
                                                                     </div>
-                                                                    <div className="grid gap-2">
-                                                                        <Label
-                                                                            htmlFor={`edit_image_${option.id}`}
-                                                                        >
-                                                                            Imagen
-                                                                            (opcional)
-                                                                        </Label>
-                                                                        <Input
-                                                                            id={`edit_image_${option.id}`}
-                                                                            name="image"
-                                                                            type="file"
-                                                                            accept="image/jpeg,image/png,image/webp"
-                                                                            className="max-w-52"
-                                                                        />
-                                                                        <InputError
-                                                                            message={
-                                                                                errors.image
-                                                                            }
-                                                                        />
-                                                                    </div>
+                                                                    {!isDimensions && (
+                                                                        <div className="grid gap-2">
+                                                                            <Label
+                                                                                htmlFor={`edit_image_${option.id}`}
+                                                                            >
+                                                                                Imagen
+                                                                                (opcional)
+                                                                            </Label>
+                                                                            <Input
+                                                                                id={`edit_image_${option.id}`}
+                                                                                name="image"
+                                                                                type="file"
+                                                                                accept="image/jpeg,image/png,image/webp"
+                                                                                className="max-w-52"
+                                                                            />
+                                                                            <InputError
+                                                                                message={
+                                                                                    errors.image
+                                                                                }
+                                                                            />
+                                                                        </div>
+                                                                    )}
                                                                     <Button
                                                                         type="submit"
                                                                         disabled={
@@ -251,19 +267,21 @@ export default function ComponentsEdit({
                                                 </TableRow>
                                             ) : (
                                                 <TableRow key={option.id}>
-                                                    <TableCell>
-                                                        {option.image_url ? (
-                                                            <img
-                                                                src={
-                                                                    option.image_url
-                                                                }
-                                                                alt=""
-                                                                className="h-10 w-10 rounded border object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="h-10 w-10 rounded border border-dashed bg-muted" />
-                                                        )}
-                                                    </TableCell>
+                                                    {!isDimensions && (
+                                                        <TableCell>
+                                                            {option.image_url ? (
+                                                                <img
+                                                                    src={
+                                                                        option.image_url
+                                                                    }
+                                                                    alt=""
+                                                                    className="h-10 w-10 rounded border object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-10 w-10 rounded border border-dashed bg-muted" />
+                                                            )}
+                                                        </TableCell>
+                                                    )}
                                                     <TableCell>
                                                         {option.label}
                                                     </TableCell>
@@ -426,28 +444,40 @@ export default function ComponentsEdit({
                                                 id="option_value"
                                                 name="value"
                                                 required
-                                                placeholder="gloss"
+                                                placeholder={
+                                                    isDimensions
+                                                        ? '420x594'
+                                                        : 'gloss'
+                                                }
                                                 className="font-mono"
                                             />
+                                            {isDimensions && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    Ancho x alto en
+                                                    milimetros.
+                                                </p>
+                                            )}
                                             <InputError
                                                 message={errors.value}
                                             />
                                         </div>
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="option_image">
-                                                Imagen (opcional)
-                                            </Label>
-                                            <Input
-                                                id="option_image"
-                                                name="image"
-                                                type="file"
-                                                accept="image/jpeg,image/png,image/webp"
-                                                className="max-w-52"
-                                            />
-                                            <InputError
-                                                message={errors.image}
-                                            />
-                                        </div>
+                                        {!isDimensions && (
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="option_image">
+                                                    Imagen (opcional)
+                                                </Label>
+                                                <Input
+                                                    id="option_image"
+                                                    name="image"
+                                                    type="file"
+                                                    accept="image/jpeg,image/png,image/webp"
+                                                    className="max-w-52"
+                                                />
+                                                <InputError
+                                                    message={errors.image}
+                                                />
+                                            </div>
+                                        )}
                                         <Button
                                             type="submit"
                                             disabled={processing}

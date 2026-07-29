@@ -79,6 +79,25 @@ it('bakes adjustment_percent into the tier price without ever exposing the raw f
         );
 });
 
+it('includes size presets for a DIMENSIONS component just like CHOICE options', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerArea);
+    $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180]]);
+    attachComponent($catalogProduct->productTemplate, 'dimensions', 'Tamano', InputType::Dimensions, options: [
+        ['420x594', '420 x 594 mm (A2)'],
+        ['841x594', '594 x 841 mm (A1)'],
+    ]);
+
+    $this->get("/{$catalogProduct->slug}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('catalog/show')
+            ->where('catalogProduct.components.0.code', 'dimensions')
+            ->has('catalogProduct.components.0.options', 2)
+            ->where('catalogProduct.components.0.options.0.value', '420x594')
+            ->where('catalogProduct.components.0.options.0.label', '420 x 594 mm (A2)')
+        );
+});
+
 it('does not expose pricing internals on the show page', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerAreaWithSetup);
     $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180, 'setup_fee' => 50]]);

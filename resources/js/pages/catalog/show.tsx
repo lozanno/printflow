@@ -66,6 +66,18 @@ function isDimensions(value: SelectionValue | undefined): value is Dimensions {
     return typeof value === 'object' && value !== null;
 }
 
+function parsePresetMillimeters(
+    value: string,
+): { width: number; height: number } | null {
+    const match = /^(\d+)x(\d+)$/.exec(value);
+
+    if (!match) {
+        return null;
+    }
+
+    return { width: Number(match[1]) / 1000, height: Number(match[2]) / 1000 };
+}
+
 function formatMoney(amount: number, currency: string): string {
     return new Intl.NumberFormat('es-MX', {
         style: 'currency',
@@ -294,6 +306,152 @@ function QuantityTable({
     );
 }
 
+function DimensionsField({
+    component,
+    selected,
+    onSelectPreset,
+    onWidthChange,
+    onHeightChange,
+}: {
+    component: ProductComponent;
+    selected: Dimensions | undefined;
+    onSelectPreset: (width: number, height: number) => void;
+    onWidthChange: (value: number) => void;
+    onHeightChange: (value: number) => void;
+}) {
+    const hasPresets = component.options.length > 0;
+    const [customMode, setCustomMode] = useState(!hasPresets);
+    const [expanded, setExpanded] = useState(false);
+
+    if (!hasPresets) {
+        return (
+            <div className="mt-3 flex max-w-72 gap-3">
+                <div className="flex-1">
+                    <Label className="text-xs text-zinc-500">
+                        Ancho (m)
+                    </Label>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        onChange={(event) =>
+                            onWidthChange(Number(event.target.value))
+                        }
+                    />
+                </div>
+                <div className="flex-1">
+                    <Label className="text-xs text-zinc-500">Alto (m)</Label>
+                    <Input
+                        type="number"
+                        step="0.01"
+                        onChange={(event) =>
+                            onHeightChange(Number(event.target.value))
+                        }
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    const visible = expanded
+        ? component.options
+        : component.options.slice(0, VISIBLE_ITEM_LIMIT);
+    const hiddenCount = component.options.length - visible.length;
+
+    const selectedPresetValue = selected
+        ? component.options.find((option) => {
+              const parsed = parsePresetMillimeters(option.value);
+
+              return (
+                  parsed !== null &&
+                  Math.abs(parsed.width - (selected.width ?? -1)) < 0.0001 &&
+                  Math.abs(parsed.height - (selected.height ?? -1)) < 0.0001
+              );
+          })?.value
+        : undefined;
+
+    return (
+        <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200">
+            <div className="bg-zinc-50 px-4 py-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                {component.label}
+            </div>
+            {visible.map((option) => {
+                const parsed = parsePresetMillimeters(option.value);
+
+                if (parsed === null) {
+                    return null;
+                }
+
+                return (
+                    <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => {
+                            setCustomMode(false);
+                            onSelectPreset(parsed.width, parsed.height);
+                        }}
+                        className={cn(
+                            'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
+                            !customMode &&
+                                selectedPresetValue === option.value
+                                ? 'border-zinc-900 bg-zinc-50 text-zinc-900 ring-1 ring-inset ring-zinc-900'
+                                : 'text-zinc-700 hover:bg-zinc-50',
+                        )}
+                    >
+                        {option.label}
+                    </button>
+                );
+            })}
+            <ShowMoreToggle
+                hiddenCount={hiddenCount}
+                expanded={expanded}
+                onToggle={() => setExpanded((current) => !current)}
+            />
+            <button
+                type="button"
+                onClick={() => setCustomMode(true)}
+                className={cn(
+                    'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
+                    customMode
+                        ? 'border-zinc-900 bg-zinc-50 text-zinc-900 ring-1 ring-inset ring-zinc-900'
+                        : 'text-zinc-700 hover:bg-zinc-50',
+                )}
+            >
+                Tamano personalizado
+            </button>
+            {customMode && (
+                <div className="flex gap-3 border-t border-zinc-100 p-4">
+                    <div className="flex-1">
+                        <Label className="text-xs text-zinc-500">
+                            Ancho (m)
+                        </Label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            defaultValue={selected?.width}
+                            onChange={(event) =>
+                                onWidthChange(Number(event.target.value))
+                            }
+                        />
+                    </div>
+                    <div className="flex-1">
+                        <Label className="text-xs text-zinc-500">
+                            Alto (m)
+                        </Label>
+                        <Input
+                            type="number"
+                            step="0.01"
+                            defaultValue={selected?.height}
+                            onChange={(event) =>
+                                onHeightChange(Number(event.target.value))
+                            }
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function CatalogShow({
     catalogProduct,
 }: {
@@ -498,6 +656,8 @@ export default function CatalogShow({
                             const hasIllustratedOptions =
                                 component.input_type === 'CHOICE' &&
                                 component.options.some((o) => o.image_url);
+                            const selectedValue =
+                                selections[component.code];
 
                             return (
                                 <div key={component.code}>
@@ -517,9 +677,7 @@ export default function CatalogShow({
                                         (hasIllustratedOptions ? (
                                             <IllustratedOptions
                                                 component={component}
-                                                selected={
-                                                    selections[component.code]
-                                                }
+                                                selected={selectedValue}
                                                 onSelect={(value) =>
                                                     updateSelection(
                                                         component.code,
@@ -530,9 +688,7 @@ export default function CatalogShow({
                                         ) : (
                                             <TableStyleOptions
                                                 component={component}
-                                                selected={
-                                                    selections[component.code]
-                                                }
+                                                selected={selectedValue}
                                                 onSelect={(value) =>
                                                     updateSelection(
                                                         component.code,
@@ -555,47 +711,39 @@ export default function CatalogShow({
                                         />
                                     )}
 
-                                    {component.input_type === 'DIMENSIONS' && (
-                                        <div className="mt-3 flex max-w-72 gap-3">
-                                            <div className="flex-1">
-                                                <Label className="text-xs text-zinc-500">
-                                                    Ancho (m)
-                                                </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    onChange={(event) =>
-                                                        updateDimension(
-                                                            component.code,
-                                                            'width',
-                                                            Number(
-                                                                event.target
-                                                                    .value,
-                                                            ),
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <Label className="text-xs text-zinc-500">
-                                                    Alto (m)
-                                                </Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    onChange={(event) =>
-                                                        updateDimension(
-                                                            component.code,
-                                                            'height',
-                                                            Number(
-                                                                event.target
-                                                                    .value,
-                                                            ),
-                                                        )
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
+                                    {component.input_type ===
+                                        'DIMENSIONS' && (
+                                        <DimensionsField
+                                            component={component}
+                                            selected={
+                                                isDimensions(selectedValue)
+                                                    ? selectedValue
+                                                    : undefined
+                                            }
+                                            onSelectPreset={(
+                                                width,
+                                                height,
+                                            ) =>
+                                                updateSelection(
+                                                    component.code,
+                                                    { width, height },
+                                                )
+                                            }
+                                            onWidthChange={(value) =>
+                                                updateDimension(
+                                                    component.code,
+                                                    'width',
+                                                    value,
+                                                )
+                                            }
+                                            onHeightChange={(value) =>
+                                                updateDimension(
+                                                    component.code,
+                                                    'height',
+                                                    value,
+                                                )
+                                            }
+                                        />
                                     )}
                                 </div>
                             );

@@ -16,11 +16,18 @@ use Illuminate\Support\Collection;
 /**
  * Turns a customer's selections on a CatalogProduct into a real price.
  *
- * Components are matched to their role by a fixed code convention rather
- * than a dedicated schema flag: the component driving a PER_UNIT_TIERED
- * quote must be coded "quantity"; the one driving a PER_AREA(_WITH_SETUP)
- * quote must be coded "dimensions" and carry a {width, height} value. Any
- * other CHOICE component only ever affects price through an
+ * A PER_UNIT_TIERED quote always reads its quantity from the fixed
+ * selections key "quantity" - by design that role is no longer backed by
+ * a Component at all (see PricingTier), so there's nothing to look up.
+ *
+ * A PER_AREA(_WITH_SETUP) quote instead reads {width, height} from
+ * whichever attached Component has input_type DIMENSIONS, keyed by that
+ * component's own code - not a fixed key - so two different PER_AREA
+ * products can each have their own independently-coded DIMENSIONS
+ * component (and therefore their own, non-shared size presets) rather
+ * than being forced to share a single "dimensions" Component.
+ *
+ * Any other CHOICE component only ever affects price through an
  * OptionPriceModifier.
  */
 final class PriceCalculator
@@ -48,8 +55,8 @@ final class PriceCalculator
 
         [$basePrice, $quantity] = match ($template->pricing_strategy) {
             PricingStrategy::PerUnitTiered => $this->calculateTiered($profile, $selections),
-            PricingStrategy::PerArea => $this->calculateArea($profile, $selections, withSetup: false),
-            PricingStrategy::PerAreaWithSetup => $this->calculateArea($profile, $selections, withSetup: true),
+            PricingStrategy::PerArea => $this->calculateArea($template, $profile, $selections, withSetup: false),
+            PricingStrategy::PerAreaWithSetup => $this->calculateArea($template, $profile, $selections, withSetup: true),
         };
 
         $selectedOptionLabels = $this->resolveSelectedOptionLabels($template, $selections);
@@ -183,9 +190,13 @@ final class PriceCalculator
      * @param  array<string, mixed>  $selections
      * @return array{0: float, 1: int}
      */
-    private function calculateArea(PricingProfile $profile, array $selections, bool $withSetup): array
+    private function calculateArea(ProductTemplate $template, PricingProfile $profile, array $selections, bool $withSetup): array
     {
-        $dimensions = $selections['dimensions'] ?? null;
+        $dimensionsComponent = $template->components->first(
+            fn (Component $component) => $component->input_type === InputType::Dimensions,
+        );
+
+        $dimensions = $dimensionsComponent !== null ? ($selections[$dimensionsComponent->code] ?? null) : null;
 
         if (! $this->isValidDimensions($dimensions)) {
             throw QuoteCannotBeCalculatedException::missingSelection('dimensions');

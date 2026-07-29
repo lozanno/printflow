@@ -69,6 +69,40 @@ it('calculates an area-based price with a setup fee added on top', function () {
         ->and($result->total)->toBe(590.0);
 });
 
+it('reads dimensions from whichever component has that role, not a fixed "dimensions" code', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerArea);
+    attachComponent($catalogProduct->productTemplate, 'size_lona', 'Tamano de lona', InputType::Dimensions, options: [
+        ['420x594', '420 x 594 mm (A2)'],
+    ]);
+    $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180]]);
+
+    $result = (new PriceCalculator)->calculate($catalogProduct->fresh(), [
+        'size_lona' => ['width' => 2, 'height' => 1.5],
+    ]);
+
+    expect($result->total)->toBe(540.0);
+});
+
+it('lets two PER_AREA products use independently coded dimensions components with their own presets', function () {
+    $lona = makeCatalogProduct(PricingStrategy::PerArea);
+    attachComponent($lona->productTemplate, 'size_lona', 'Tamano de lona', InputType::Dimensions, options: [
+        ['420x594', '420 x 594 mm (A2)'],
+    ]);
+    $lona->pricingProfile->update(['params' => ['rate_per_sqm' => 180]]);
+
+    $vinil = makeCatalogProduct(PricingStrategy::PerArea);
+    attachComponent($vinil->productTemplate, 'size_vinil', 'Tamano de vinil', InputType::Dimensions, options: [
+        ['300x300', '300 x 300 mm'],
+    ]);
+    $vinil->pricingProfile->update(['params' => ['rate_per_sqm' => 90]]);
+
+    $lonaComponent = $lona->fresh()->productTemplate->components->firstWhere('code', 'size_lona');
+    $vinilComponent = $vinil->fresh()->productTemplate->components->firstWhere('code', 'size_vinil');
+
+    expect($lonaComponent->options->pluck('value')->all())->toBe(['420x594'])
+        ->and($vinilComponent->options->pluck('value')->all())->toBe(['300x300']);
+});
+
 it('throws when an area strategy is missing its rate', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerArea);
     attachComponent($catalogProduct->productTemplate, 'dimensions', 'Dimensiones', InputType::Dimensions);

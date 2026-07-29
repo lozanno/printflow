@@ -12,6 +12,15 @@ function makeChoiceComponent(): Component
     ]);
 }
 
+function makeDimensionsComponent(): Component
+{
+    return Component::create([
+        'code' => 'size-'.uniqid(),
+        'label' => 'Tamano',
+        'input_type' => 'DIMENSIONS',
+    ]);
+}
+
 it('redirects guests for every option route', function () {
     $component = makeChoiceComponent();
     $option = $component->options()->create(['value' => 'gloss', 'label' => 'Brillante', 'sort_order' => 0]);
@@ -113,4 +122,41 @@ it('moves an option down by swapping sort_order with its next sibling', function
 
     expect($first->fresh()->sort_order)->toBe(2)
         ->and($second->fresh()->sort_order)->toBe(1);
+});
+
+it('accepts a widthxheight value for a size preset on a DIMENSIONS component', function () {
+    $component = makeDimensionsComponent();
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('admin.components.options.store', $component), [
+            'value' => '420x594',
+            'label' => '420 x 594 mm (A2)',
+        ])
+        ->assertRedirect(route('admin.components.edit', $component));
+
+    expect($component->options()->where('value', '420x594')->exists())->toBeTrue();
+});
+
+it('rejects a non widthxheight value for a size preset on a DIMENSIONS component', function () {
+    $component = makeDimensionsComponent();
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('admin.components.options.store', $component), [
+            'value' => 'gloss',
+            'label' => 'Not a size',
+        ])
+        ->assertSessionHasErrors('value');
+
+    expect($component->options()->count())->toBe(0);
+});
+
+it('does not constrain the value format for a CHOICE component', function () {
+    $component = makeChoiceComponent();
+
+    $this->actingAs(User::factory()->create())
+        ->post(route('admin.components.options.store', $component), [
+            'value' => 'gloss',
+            'label' => 'Laminado brillante',
+        ])
+        ->assertSessionDoesntHaveErrors('value');
 });
