@@ -1,5 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,20 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { create, edit, index } from '@/routes/admin/components';
+import { create, destroy, edit, index } from '@/routes/admin/components';
 import type { Component, InputType } from '@/types';
+
+function handleDelete(component: Component) {
+    if (
+        !confirm(
+            `Eliminar "${component.label}"? Tambien se borran sus opciones. Esta accion no se puede deshacer.`,
+        )
+    ) {
+        return;
+    }
+
+    router.delete(destroy(component.id).url);
+}
 
 const INPUT_TYPE_LABELS: Record<InputType, string> = {
     CHOICE: 'Opciones',
@@ -84,15 +96,28 @@ export default function ComponentsIndex({
                                         {component.options_count ?? 0}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <Link href={edit(component.id)}>
-                                                Editar
-                                            </Link>
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
+                                            >
+                                                <Link href={edit(component.id)}>
+                                                    Editar
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Eliminar ${component.label}`}
+                                                onClick={() =>
+                                                    handleDelete(component)
+                                                }
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}

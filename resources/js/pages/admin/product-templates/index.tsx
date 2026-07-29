@@ -1,5 +1,5 @@
-import { Head, Link } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus, Trash2 } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { create, edit, index } from '@/routes/admin/product-templates';
+import { create, destroy, edit, index } from '@/routes/admin/product-templates';
 import type { PricingStrategy, ProductTemplate } from '@/types';
 
 const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
@@ -19,6 +19,18 @@ const PRICING_STRATEGY_LABELS: Record<PricingStrategy, string> = {
     PER_AREA: 'Por area',
     PER_AREA_WITH_SETUP: 'Por area + costo fijo',
 };
+
+function handleDelete(productTemplate: ProductTemplate) {
+    if (
+        !confirm(
+            `Eliminar "${productTemplate.name}"? Esta accion no se puede deshacer.`,
+        )
+    ) {
+        return;
+    }
+
+    router.delete(destroy(productTemplate.id).url);
+}
 
 export default function ProductTemplatesIndex({
     productTemplates,
@@ -85,17 +97,34 @@ export default function ProductTemplatesIndex({
                                         {productTemplate.components_count ?? 0}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button
-                                            asChild
-                                            variant="outline"
-                                            size="sm"
-                                        >
-                                            <Link
-                                                href={edit(productTemplate.id)}
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                asChild
+                                                variant="outline"
+                                                size="sm"
                                             >
-                                                Editar
-                                            </Link>
-                                        </Button>
+                                                <Link
+                                                    href={edit(
+                                                        productTemplate.id,
+                                                    )}
+                                                >
+                                                    Editar
+                                                </Link>
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                aria-label={`Eliminar ${productTemplate.name}`}
+                                                onClick={() =>
+                                                    handleDelete(
+                                                        productTemplate,
+                                                    )
+                                                }
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}
