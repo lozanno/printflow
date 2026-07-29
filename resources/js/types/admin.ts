@@ -6,6 +6,7 @@ export type ComponentOption = {
     value: string;
     label: string;
     sort_order: number;
+    image_url: string | null;
 };
 
 export type Component = {
@@ -68,6 +69,8 @@ export type CatalogProduct = {
     shop_id: number;
     product_template_id: number;
     name_override: string | null;
+    image_url: string | null;
+    description: string | null;
     is_active: boolean;
     product_template?: ProductTemplate;
     pricing_profile?: PricingProfile;

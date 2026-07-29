@@ -20,6 +20,8 @@ class UpdateCatalogProductRequest extends FormRequest
 
         $rules = [
             'name_override' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:4096'],
             // HTML checkboxes submit "on" (or omit the field), see
             // StoreProductTemplateComponentRequest for why this isn't
             // the strict `boolean` rule.

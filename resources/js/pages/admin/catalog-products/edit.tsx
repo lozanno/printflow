@@ -31,6 +31,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { index } from '@/routes/admin/catalog-products';
 import type { CatalogProduct } from '@/types';
 
@@ -88,6 +89,40 @@ export default function CatalogProductsEdit({
                                     }
                                 />
                                 <InputError message={errors.name_override} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="description">
+                                    Descripcion / texto promocional
+                                </Label>
+                                <Textarea
+                                    id="description"
+                                    name="description"
+                                    rows={4}
+                                    placeholder="Cuentale al cliente por que comprar contigo: calidad, tiempos de entrega, garantia..."
+                                    defaultValue={
+                                        catalogProduct.description ?? ''
+                                    }
+                                />
+                                <InputError message={errors.description} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="image">Foto del producto</Label>
+                                {catalogProduct.image_url && (
+                                    <img
+                                        src={catalogProduct.image_url}
+                                        alt=""
+                                        className="h-32 w-32 rounded-lg border object-cover"
+                                    />
+                                )}
+                                <Input
+                                    id="image"
+                                    name="image"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                />
+                                <InputError message={errors.image} />
                             </div>
 
                             <div className="flex flex-col gap-2">

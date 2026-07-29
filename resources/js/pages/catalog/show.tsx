@@ -1,9 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
+import { ImageOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getCsrfToken, toUrl } from '@/lib/utils';
+import { cn, getCsrfToken, toUrl } from '@/lib/utils';
 import { home } from '@/routes';
 import { quote } from '@/routes/catalog';
 
@@ -12,6 +13,7 @@ type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 type ComponentOption = {
     value: string;
     label: string;
+    image_url: string | null;
 };
 
 type ProductComponent = {
@@ -25,6 +27,8 @@ type ProductComponent = {
 type CatalogProductDetail = {
     id: number;
     name: string;
+    image_url: string | null;
+    description: string | null;
     components: ProductComponent[];
 };
 
@@ -53,6 +57,27 @@ function formatMoney(amount: number, currency: string): string {
         style: 'currency',
         currency,
     }).format(amount);
+}
+
+function describeSelection(
+    component: ProductComponent,
+    value: SelectionValue,
+): string | null {
+    if (isDimensions(value)) {
+        if (!value.width || !value.height) {
+            return null;
+        }
+
+        return `${component.label}: ${value.width}m x ${value.height}m`;
+    }
+
+    if (component.input_type === 'CHOICE') {
+        const option = component.options.find((o) => o.value === value);
+
+        return option ? `${component.label}: ${option.label}` : null;
+    }
+
+    return value === '' ? null : `${component.label}: ${value}`;
 }
 
 export default function CatalogShow({
@@ -139,12 +164,22 @@ export default function CatalogShow({
         };
     }, [selections, catalogProduct.id]);
 
+    const selectionSummary = catalogProduct.components
+        .map((component) => {
+            const value = selections[component.code];
+
+            return value === undefined
+                ? null
+                : describeSelection(component, value);
+        })
+        .filter((label): label is string => label !== null);
+
     return (
         <>
             <Head title={catalogProduct.name} />
 
-            <div className="min-h-screen bg-zinc-50 px-6 py-10">
-                <div className="mx-auto max-w-5xl">
+            <div className="min-h-screen bg-zinc-50 px-6 pt-10 pb-28">
+                <div className="mx-auto max-w-3xl">
                     <Link
                         href={home()}
                         className="text-sm text-zinc-500 hover:text-zinc-700"
@@ -152,13 +187,39 @@ export default function CatalogShow({
                         &larr; Volver al catalogo
                     </Link>
 
-                    <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900">
+                    <div className="mt-4 overflow-hidden rounded-2xl bg-zinc-100">
+                        <div className="aspect-16/7 w-full">
+                            {catalogProduct.image_url ? (
+                                <img
+                                    src={catalogProduct.image_url}
+                                    alt={catalogProduct.name}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center text-zinc-300">
+                                    <ImageOff className="size-12" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <h1 className="mt-6 text-3xl font-bold tracking-tight text-zinc-900">
                         {catalogProduct.name}
                     </h1>
 
-                    <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
-                        <div className="space-y-7 rounded-2xl bg-white p-6 shadow-sm">
-                            {catalogProduct.components.map((component) => (
+                    {catalogProduct.description && (
+                        <p className="mt-2 whitespace-pre-line text-zinc-600">
+                            {catalogProduct.description}
+                        </p>
+                    )}
+
+                    <div className="mt-8 space-y-7 rounded-2xl bg-white p-6 shadow-sm">
+                        {catalogProduct.components.map((component) => {
+                            const hasIllustratedOptions =
+                                component.input_type === 'CHOICE' &&
+                                component.options.some((o) => o.image_url);
+
+                            return (
                                 <div key={component.code}>
                                     <Label className="block text-sm font-semibold text-zinc-800">
                                         {component.label}
@@ -169,31 +230,80 @@ export default function CatalogShow({
                                         )}
                                     </Label>
 
-                                    {component.input_type === 'CHOICE' && (
-                                        <div className="mt-3 flex flex-wrap gap-3">
-                                            {component.options.map((option) => (
-                                                <Button
-                                                    key={option.value}
-                                                    type="button"
-                                                    variant={
-                                                        selections[
-                                                            component.code
-                                                        ] === option.value
-                                                            ? 'default'
-                                                            : 'outline'
-                                                    }
-                                                    onClick={() =>
-                                                        updateSelection(
-                                                            component.code,
-                                                            option.value,
-                                                        )
-                                                    }
-                                                >
-                                                    {option.label}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    )}
+                                    {component.input_type === 'CHOICE' &&
+                                        (hasIllustratedOptions ? (
+                                            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                {component.options.map(
+                                                    (option) => (
+                                                        <button
+                                                            key={option.value}
+                                                            type="button"
+                                                            onClick={() =>
+                                                                updateSelection(
+                                                                    component.code,
+                                                                    option.value,
+                                                                )
+                                                            }
+                                                            className={cn(
+                                                                'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition',
+                                                                selections[
+                                                                    component
+                                                                        .code
+                                                                ] ===
+                                                                    option.value
+                                                                    ? 'border-zinc-900 ring-1 ring-zinc-900'
+                                                                    : 'border-zinc-200 hover:border-zinc-400',
+                                                            )}
+                                                        >
+                                                            {option.image_url ? (
+                                                                <img
+                                                                    src={
+                                                                        option.image_url
+                                                                    }
+                                                                    alt=""
+                                                                    className="h-16 w-16 object-contain"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex h-16 w-16 items-center justify-center rounded bg-zinc-50 text-zinc-300">
+                                                                    <ImageOff className="size-6" />
+                                                                </div>
+                                                            )}
+                                                            <span className="text-sm font-medium text-zinc-800">
+                                                                {option.label}
+                                                            </span>
+                                                        </button>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div className="mt-3 flex flex-wrap gap-3">
+                                                {component.options.map(
+                                                    (option) => (
+                                                        <Button
+                                                            key={option.value}
+                                                            type="button"
+                                                            variant={
+                                                                selections[
+                                                                    component
+                                                                        .code
+                                                                ] ===
+                                                                option.value
+                                                                    ? 'default'
+                                                                    : 'outline'
+                                                            }
+                                                            onClick={() =>
+                                                                updateSelection(
+                                                                    component.code,
+                                                                    option.value,
+                                                                )
+                                                            }
+                                                        >
+                                                            {option.label}
+                                                        </Button>
+                                                    ),
+                                                )}
+                                            </div>
+                                        ))}
 
                                     {component.input_type === 'NUMBER' && (
                                         <Input
@@ -251,79 +361,36 @@ export default function CatalogShow({
                                         </div>
                                     )}
                                 </div>
-                            ))}
-                        </div>
-
-                        <div className="h-fit rounded-2xl bg-zinc-900 p-6 text-white shadow-sm">
-                            <h3 className="text-xl font-bold">Resumen</h3>
-
-                            {quoteResult ? (
-                                <div className="mt-6 space-y-3">
-                                    <div className="flex justify-between text-sm text-zinc-400">
-                                        <span>Precio base</span>
-                                        <span>
-                                            {formatMoney(
-                                                quoteResult.base_price,
-                                                quoteResult.currency,
-                                            )}
-                                        </span>
-                                    </div>
-
-                                    {quoteResult.modifiers.map(
-                                        (modifier, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex justify-between text-sm text-zinc-400"
-                                            >
-                                                <span>{modifier.label}</span>
-                                                <span>
-                                                    {modifier.amount >= 0
-                                                        ? '+'
-                                                        : ''}
-                                                    {formatMoney(
-                                                        modifier.amount,
-                                                        quoteResult.currency,
-                                                    )}
-                                                </span>
-                                            </div>
-                                        ),
-                                    )}
-
-                                    <div className="mt-4 rounded-xl bg-zinc-800 p-4">
-                                        <p className="text-xs text-zinc-400 uppercase">
-                                            Total
-                                        </p>
-                                        <p className="text-3xl font-bold">
-                                            {formatMoney(
-                                                quoteResult.total,
-                                                quoteResult.currency,
-                                            )}
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="mt-6 rounded-xl bg-zinc-800 p-4">
-                                    <p className="text-sm text-zinc-400">
-                                        {loading
-                                            ? 'Calculando...'
-                                            : (quoteError ??
-                                              'Completa las opciones para ver tu precio.')}
-                                    </p>
-                                </div>
-                            )}
-
-                            <Button
-                                className="mt-4 w-full"
-                                variant="secondary"
-                                disabled
-                            >
-                                Continuar al pedido
-                            </Button>
-                            <p className="mt-2 text-center text-xs text-zinc-500">
-                                Muy pronto: pagar y hacer tu pedido desde aqui.
-                            </p>
-                        </div>
+                            );
+                        })}
                     </div>
+                </div>
+            </div>
+
+            <div className="fixed inset-x-0 bottom-0 border-t border-zinc-800 bg-zinc-900 text-white shadow-[0_-4px_16px_rgba(0,0,0,0.2)]">
+                <div className="mx-auto flex max-w-3xl flex-wrap items-center gap-4 px-6 py-4">
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm text-zinc-400">
+                            {selectionSummary.length > 0
+                                ? `${catalogProduct.name} — ${selectionSummary.join(' · ')}`
+                                : catalogProduct.name}
+                        </p>
+                        <p className="text-xl font-bold">
+                            {quoteResult
+                                ? formatMoney(
+                                      quoteResult.total,
+                                      quoteResult.currency,
+                                  )
+                                : (quoteError ??
+                                  (loading
+                                      ? 'Calculando...'
+                                      : 'Completa las opciones para ver tu precio'))}
+                        </p>
+                    </div>
+
+                    <Button variant="secondary" disabled className="shrink-0">
+                        Continuar al pedido
+                    </Button>
                 </div>
             </div>
         </>

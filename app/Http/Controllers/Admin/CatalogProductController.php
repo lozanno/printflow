@@ -12,6 +12,7 @@ use App\Models\ProductTemplate;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -106,10 +107,21 @@ class CatalogProductController extends Controller
     {
         $this->ensureBelongsToCurrentShop($catalogProduct);
 
-        $catalogProduct->update([
+        $attributes = [
             'name_override' => $request->validated('name_override'),
+            'description' => $request->validated('description'),
             'is_active' => $request->boolean('is_active'),
-        ]);
+        ];
+
+        if ($request->hasFile('image')) {
+            if ($catalogProduct->image_path) {
+                Storage::disk('public')->delete($catalogProduct->image_path);
+            }
+
+            $attributes['image_path'] = $request->file('image')->store('catalog-products', 'public');
+        }
+
+        $catalogProduct->update($attributes);
 
         $strategy = $catalogProduct->productTemplate->pricing_strategy;
 
@@ -140,6 +152,10 @@ class CatalogProductController extends Controller
             ]);
 
             return to_route('admin.catalog-products.index');
+        }
+
+        if ($catalogProduct->image_path) {
+            Storage::disk('public')->delete($catalogProduct->image_path);
         }
 
         $catalogProduct->delete();

@@ -28,6 +28,7 @@ class UpdateComponentOptionRequest extends FormRequest
                     ->ignore($this->route('option')),
             ],
             'label' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:4096'],
         ];
     }
 }

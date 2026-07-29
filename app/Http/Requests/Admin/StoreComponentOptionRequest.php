@@ -27,6 +27,7 @@ class StoreComponentOptionRequest extends FormRequest
                     ->where(fn ($query) => $query->where('component_id', $component->id)),
             ],
             'label' => ['required', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:4096'],
         ];
     }
 }

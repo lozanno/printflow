@@ -125,6 +125,7 @@ export default function ComponentsEdit({
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
+                                            <TableHead>Imagen</TableHead>
                                             <TableHead>Etiqueta</TableHead>
                                             <TableHead>Valor</TableHead>
                                             <TableHead className="text-right">
@@ -135,6 +136,19 @@ export default function ComponentsEdit({
                                     <TableBody>
                                         {component.options.map((option) => (
                                             <TableRow key={option.id}>
+                                                <TableCell>
+                                                    {option.image_url ? (
+                                                        <img
+                                                            src={
+                                                                option.image_url
+                                                            }
+                                                            alt=""
+                                                            className="h-10 w-10 rounded border object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-10 w-10 rounded border border-dashed bg-muted" />
+                                                    )}
+                                                </TableCell>
                                                 <TableCell>
                                                     {option.label}
                                                 </TableCell>
@@ -214,6 +228,21 @@ export default function ComponentsEdit({
                                             />
                                             <InputError
                                                 message={errors.value}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="option_image">
+                                                Imagen (opcional)
+                                            </Label>
+                                            <Input
+                                                id="option_image"
+                                                name="image"
+                                                type="file"
+                                                accept="image/jpeg,image/png,image/webp"
+                                                className="max-w-52"
+                                            />
+                                            <InputError
+                                                message={errors.image}
                                             />
                                         </div>
                                         <Button
