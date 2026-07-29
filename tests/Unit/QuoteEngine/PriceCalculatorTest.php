@@ -257,3 +257,66 @@ it('throws when the catalog product has no pricing profile', function () {
 
     (new PriceCalculator)->calculate($catalogProduct->fresh(), ['quantity' => 100]);
 })->throws(QuoteCannotBeCalculatedException::class);
+
+it('applies a tier adjustment_percent to the base price before option modifiers', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->pricingProfile->tiers()->create([
+        'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1.00, 'adjustment_percent' => -10,
+    ]);
+
+    $result = (new PriceCalculator)->calculate($catalogProduct->fresh(), ['quantity' => 100]);
+
+    // 100 * 1.00 = 100, then -10% = 90
+    expect($result->basePrice)->toBe(90.0)
+        ->and($result->total)->toBe(90.0);
+});
+
+it('builds a full tier table with option modifiers applied to every row', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $finish = attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
+    ]);
+    $catalogProduct->pricingProfile->tiers()->createMany([
+        ['min_quantity' => 100, 'max_quantity' => 249, 'unit_price' => 1.50],
+        ['min_quantity' => 250, 'max_quantity' => null, 'unit_price' => 1.10, 'adjustment_percent' => 10],
+    ]);
+    $catalogProduct->pricingProfile->optionModifiers()->create([
+        'component_option_id' => $finish->options->first()->id,
+        'modifier_type' => ModifierType::FixedAdd,
+        'value' => 20,
+    ]);
+
+    $rows = (new PriceCalculator)->calculateTierTable($catalogProduct->fresh(), ['finish' => 'gloss']);
+
+    // tier 1: 100 * 1.50 = 150 -> +20 fixed = 170
+    // tier 2: 250 * (1.10 * 1.10) = 302.5 -> +20 fixed = 322.5
+    expect($rows)->toHaveCount(2)
+        ->and($rows[0]['min_quantity'])->toBe(100)
+        ->and($rows[0]['total'])->toBe(170.0)
+        ->and($rows[1]['min_quantity'])->toBe(250)
+        ->and($rows[1]['total'])->toBe(322.5);
+});
+
+it('ignores missing required selections when building the tier table preview', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    attachComponent($catalogProduct->productTemplate, 'finish', 'Acabado', InputType::Choice, options: [
+        ['gloss', 'Laminado brillante'],
+    ]);
+    $catalogProduct->pricingProfile->tiers()->create([
+        'min_quantity' => 1, 'max_quantity' => null, 'unit_price' => 1.00,
+    ]);
+
+    $rows = (new PriceCalculator)->calculateTierTable($catalogProduct->fresh(), []);
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['total'])->toBe(1.0);
+});
+
+it('returns an empty tier table for a non-per_unit_tiered product', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerArea);
+    $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180]]);
+
+    $rows = (new PriceCalculator)->calculateTierTable($catalogProduct->fresh(), []);
+
+    expect($rows)->toBe([]);
+});

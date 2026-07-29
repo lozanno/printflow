@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Trash2 } from 'lucide-react';
 import ProductTemplateComponentController from '@/actions/App/Http/Controllers/Admin/ProductTemplateComponentController';
 import ProductTemplateController from '@/actions/App/Http/Controllers/Admin/ProductTemplateController';
 import Heading from '@/components/heading';
@@ -142,7 +142,7 @@ export default function ProductTemplatesEdit({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {components.map((component) => (
+                                    {components.map((component, index) => (
                                         <TableRow key={component.id}>
                                             <TableCell>
                                                 {component.label}
@@ -162,28 +162,99 @@ export default function ProductTemplatesEdit({
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Form
-                                                    {...ProductTemplateComponentController.destroy.form(
-                                                        [
-                                                            productTemplate.id,
-                                                            component.id,
-                                                        ],
-                                                    )}
-                                                >
-                                                    {({
-                                                        processing: removing,
-                                                    }) => (
-                                                        <Button
-                                                            type="submit"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            disabled={removing}
-                                                            aria-label={`Quitar ${component.label}`}
-                                                        >
-                                                            <Trash2 />
-                                                        </Button>
-                                                    )}
-                                                </Form>
+                                                <div className="flex justify-end gap-1">
+                                                    <Form
+                                                        {...ProductTemplateComponentController.move.form(
+                                                            [
+                                                                productTemplate.id,
+                                                                component.id,
+                                                            ],
+                                                        )}
+                                                    >
+                                                        {({
+                                                            processing:
+                                                                moving,
+                                                        }) => (
+                                                            <>
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="direction"
+                                                                    value="up"
+                                                                />
+                                                                <Button
+                                                                    type="submit"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    disabled={
+                                                                        moving ||
+                                                                        index ===
+                                                                            0
+                                                                    }
+                                                                    aria-label={`Subir ${component.label}`}
+                                                                >
+                                                                    <ArrowUp />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </Form>
+                                                    <Form
+                                                        {...ProductTemplateComponentController.move.form(
+                                                            [
+                                                                productTemplate.id,
+                                                                component.id,
+                                                            ],
+                                                        )}
+                                                    >
+                                                        {({
+                                                            processing:
+                                                                moving,
+                                                        }) => (
+                                                            <>
+                                                                <input
+                                                                    type="hidden"
+                                                                    name="direction"
+                                                                    value="down"
+                                                                />
+                                                                <Button
+                                                                    type="submit"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    disabled={
+                                                                        moving ||
+                                                                        index ===
+                                                                            components.length -
+                                                                                1
+                                                                    }
+                                                                    aria-label={`Bajar ${component.label}`}
+                                                                >
+                                                                    <ArrowDown />
+                                                                </Button>
+                                                            </>
+                                                        )}
+                                                    </Form>
+                                                    <Form
+                                                        {...ProductTemplateComponentController.destroy.form(
+                                                            [
+                                                                productTemplate.id,
+                                                                component.id,
+                                                            ],
+                                                        )}
+                                                    >
+                                                        {({
+                                                            processing: removing,
+                                                        }) => (
+                                                            <Button
+                                                                type="submit"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                disabled={removing}
+                                                                aria-label={`Quitar ${component.label}`}
+                                                            >
+                                                                <Trash2 />
+                                                            </Button>
+                                                        )}
+                                                    </Form>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}

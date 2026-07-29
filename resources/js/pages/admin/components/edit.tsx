@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Pencil, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Pencil, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import ComponentController from '@/actions/App/Http/Controllers/Admin/ComponentController';
 import ComponentOptionController from '@/actions/App/Http/Controllers/Admin/ComponentOptionController';
@@ -139,7 +139,7 @@ export default function ComponentsEdit({
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {component.options.map((option) =>
+                                        {component.options.map((option, index) =>
                                             editingOptionId === option.id ? (
                                                 <TableRow key={option.id}>
                                                     <TableCell colSpan={4}>
@@ -272,6 +272,78 @@ export default function ComponentsEdit({
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1">
+                                                            <Form
+                                                                {...ComponentOptionController.move.form(
+                                                                    [
+                                                                        component.id,
+                                                                        option.id,
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                {({
+                                                                    processing:
+                                                                        moving,
+                                                                }) => (
+                                                                    <>
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name="direction"
+                                                                            value="up"
+                                                                        />
+                                                                        <Button
+                                                                            type="submit"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            disabled={
+                                                                                moving ||
+                                                                                index ===
+                                                                                    0
+                                                                            }
+                                                                            aria-label={`Subir ${option.label}`}
+                                                                        >
+                                                                            <ArrowUp />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                            </Form>
+                                                            <Form
+                                                                {...ComponentOptionController.move.form(
+                                                                    [
+                                                                        component.id,
+                                                                        option.id,
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                {({
+                                                                    processing:
+                                                                        moving,
+                                                                }) => (
+                                                                    <>
+                                                                        <input
+                                                                            type="hidden"
+                                                                            name="direction"
+                                                                            value="down"
+                                                                        />
+                                                                        <Button
+                                                                            type="submit"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            disabled={
+                                                                                moving ||
+                                                                                index ===
+                                                                                    (component
+                                                                                        .options
+                                                                                        ?.length ??
+                                                                                        0) -
+                                                                                        1
+                                                                            }
+                                                                            aria-label={`Bajar ${option.label}`}
+                                                                        >
+                                                                            <ArrowDown />
+                                                                        </Button>
+                                                                    </>
+                                                                )}
+                                                            </Form>
                                                             <Button
                                                                 type="button"
                                                                 variant="ghost"

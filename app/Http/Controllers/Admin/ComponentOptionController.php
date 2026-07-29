@@ -8,7 +8,10 @@ use App\Http\Requests\Admin\UpdateComponentOptionRequest;
 use App\Models\Component;
 use App\Models\ComponentOption;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class ComponentOptionController extends Controller
@@ -49,6 +52,34 @@ class ComponentOptionController extends Controller
         $option->update($attributes);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Opcion actualizada.')]);
+
+        return to_route('admin.components.edit', $component);
+    }
+
+    public function move(Request $request, Component $component, ComponentOption $option): RedirectResponse
+    {
+        abort_if($option->component_id !== $component->id, 404);
+
+        $direction = $request->validate([
+            'direction' => ['required', Rule::in(['up', 'down'])],
+        ])['direction'];
+
+        $options = $component->options()->get();
+        $index = $options->search(fn (ComponentOption $candidate) => $candidate->id === $option->id);
+
+        abort_if($index === false, 404);
+
+        $swapWithIndex = $direction === 'up' ? $index - 1 : $index + 1;
+
+        if ($swapWithIndex >= 0 && $swapWithIndex < $options->count()) {
+            $swapWith = $options[$swapWithIndex];
+
+            DB::transaction(function () use ($option, $swapWith): void {
+                $optionOrder = $option->sort_order;
+                $option->update(['sort_order' => $swapWith->sort_order]);
+                $swapWith->update(['sort_order' => $optionOrder]);
+            });
+        }
 
         return to_route('admin.components.edit', $component);
     }

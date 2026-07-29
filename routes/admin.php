@@ -21,6 +21,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::put('components/{component}/options/{option}', [ComponentOptionController::class, 'update'])
         ->name('components.options.update');
 
+    Route::patch('components/{component}/options/{option}/move', [ComponentOptionController::class, 'move'])
+        ->name('components.options.move');
+
     Route::delete('components/{component}/options/{option}', [ComponentOptionController::class, 'destroy'])
         ->name('components.options.destroy');
 
@@ -29,6 +32,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
     Route::post('product-templates/{product_template}/components', [ProductTemplateComponentController::class, 'store'])
         ->name('product-templates.components.store');
 
+    Route::patch('product-templates/{product_template}/components/{component}/move', [ProductTemplateComponentController::class, 'move'])
+        ->name('product-templates.components.move');
+
     Route::delete('product-templates/{product_template}/components/{component}', [ProductTemplateComponentController::class, 'destroy'])
         ->name('product-templates.components.destroy');
 
@@ -36,6 +42,9 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     Route::post('catalog-products/{catalog_product}/pricing-tiers', [PricingTierController::class, 'store'])
         ->name('catalog-products.pricing-tiers.store');
+
+    Route::put('catalog-products/{catalog_product}/pricing-tiers/{tier}', [PricingTierController::class, 'update'])
+        ->name('catalog-products.pricing-tiers.update');
 
     Route::delete('catalog-products/{catalog_product}/pricing-tiers/{tier}', [PricingTierController::class, 'destroy'])
         ->name('catalog-products.pricing-tiers.destroy');

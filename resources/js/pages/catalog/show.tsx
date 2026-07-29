@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn, getCsrfToken, toUrl } from '@/lib/utils';
 import { home } from '@/routes';
-import { quote } from '@/routes/catalog';
+import { quote, tierTable } from '@/routes/catalog';
 
 type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 type PricingStrategy = 'PER_UNIT_TIERED' | 'PER_AREA' | 'PER_AREA_WITH_SETUP';
@@ -29,6 +29,7 @@ type PricingTier = {
     min_quantity: number;
     max_quantity: number | null;
     unit_price: number;
+    total: number;
 };
 
 type CatalogProductDetail = {
@@ -279,10 +280,7 @@ function QuantityTable({
                             {formatMoney(tier.unit_price, currency)}
                         </span>
                         <span className="text-right font-semibold text-zinc-900">
-                            {formatMoney(
-                                tier.unit_price * tier.min_quantity,
-                                currency,
-                            )}
+                            {formatMoney(tier.total, currency)}
                         </span>
                     </button>
                 ))}
@@ -305,6 +303,9 @@ export default function CatalogShow({
     const [quoteResult, setQuoteResult] = useState<QuoteResponse | null>(null);
     const [quoteError, setQuoteError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [tiers, setTiers] = useState<PricingTier[]>(
+        catalogProduct.pricing_tiers,
+    );
 
     function updateSelection(code: string, value: SelectionValue) {
         setSelections((current) => ({ ...current, [code]: value }));
@@ -379,6 +380,54 @@ export default function CatalogShow({
             controller.abort();
         };
     }, [selections, catalogProduct.slug]);
+
+    useEffect(() => {
+        if (
+            catalogProduct.pricing_strategy !== 'PER_UNIT_TIERED' ||
+            Object.keys(selections).length === 0
+        ) {
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const timeout = setTimeout(() => {
+            fetch(toUrl(tierTable(catalogProduct.slug)), {
+                method: 'POST',
+                signal: controller.signal,
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': getCsrfToken(),
+                },
+                body: JSON.stringify({ selections }),
+            })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const data = (await response.json()) as {
+                        tiers: PricingTier[];
+                    };
+
+                    setTiers(data.tiers);
+                })
+                .catch((error: unknown) => {
+                    if (
+                        error instanceof DOMException &&
+                        error.name === 'AbortError'
+                    ) {
+                        return;
+                    }
+                });
+        }, 300);
+
+        return () => {
+            clearTimeout(timeout);
+            controller.abort();
+        };
+    }, [selections, catalogProduct.slug, catalogProduct.pricing_strategy]);
 
     const quantitySelected =
         typeof selections.quantity === 'number'
@@ -554,9 +603,9 @@ export default function CatalogShow({
 
                         {catalogProduct.pricing_strategy ===
                             'PER_UNIT_TIERED' &&
-                            catalogProduct.pricing_tiers.length > 0 && (
+                            tiers.length > 0 && (
                                 <QuantityTable
-                                    tiers={catalogProduct.pricing_tiers}
+                                    tiers={tiers}
                                     currency={
                                         quoteResult?.currency ??
                                         catalogProduct.currency

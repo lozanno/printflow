@@ -38,4 +38,20 @@ class QuoteController extends Controller
             'currency' => $quote->currency,
         ]);
     }
+
+    public function tierTable(Request $request, CatalogProduct $catalogProduct, PriceCalculator $calculator): JsonResponse
+    {
+        abort_unless(
+            $catalogProduct->is_active && $catalogProduct->shop_id === Shop::current()->id,
+            404,
+        );
+
+        $selections = $request->input('selections', []);
+
+        abort_unless(is_array($selections), 422);
+
+        return response()->json([
+            'tiers' => $calculator->calculateTierTable($catalogProduct, $selections),
+        ]);
+    }
 }

@@ -63,6 +63,22 @@ it('builds the quantity table from pricing tiers instead of a component', functi
         );
 });
 
+it('bakes adjustment_percent into the tier price without ever exposing the raw field', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->pricingProfile->tiers()->create([
+        'min_quantity' => 100, 'max_quantity' => null, 'unit_price' => 1.00, 'adjustment_percent' => -10,
+    ]);
+
+    $this->get("/{$catalogProduct->slug}")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('catalog/show')
+            ->where('catalogProduct.pricing_tiers.0.unit_price', 0.9)
+            ->where('catalogProduct.pricing_tiers.0.total', 90)
+            ->missing('catalogProduct.pricing_tiers.0.adjustment_percent')
+        );
+});
+
 it('does not expose pricing internals on the show page', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerAreaWithSetup);
     $catalogProduct->pricingProfile->update(['params' => ['rate_per_sqm' => 180, 'setup_fee' => 50]]);

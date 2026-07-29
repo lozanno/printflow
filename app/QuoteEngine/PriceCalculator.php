@@ -128,7 +128,55 @@ final class PriceCalculator
             throw QuoteCannotBeCalculatedException::noTierForQuantity($quantity);
         }
 
-        return [(float) $tier->unit_price * $quantity, $quantity];
+        return [$tier->effectiveUnitPrice() * $quantity, $quantity];
+    }
+
+    /**
+     * Previews every PricingTier's price with whatever option modifiers
+     * are currently selected, so the customer-facing quantity table can
+     * update live as they pick other options - before they've picked a
+     * quantity, and even before every required field is filled in. Unlike
+     * calculate(), this never throws: it's a preview, not a final quote.
+     *
+     * @param  array<string, mixed>  $selections  keyed by Component code
+     * @return list<array{min_quantity: int, max_quantity: int|null, unit_price: float, total: float}>
+     */
+    public function calculateTierTable(CatalogProduct $catalogProduct, array $selections): array
+    {
+        $catalogProduct->loadMissing([
+            'productTemplate.components.options',
+            'pricingProfile.tiers',
+            'pricingProfile.optionModifiers',
+        ]);
+
+        $template = $catalogProduct->productTemplate;
+        $profile = $catalogProduct->pricingProfile;
+
+        if ($profile === null || $template->pricing_strategy !== PricingStrategy::PerUnitTiered) {
+            return [];
+        }
+
+        $selectedOptionLabels = $this->resolveSelectedOptionLabels($template, $selections);
+
+        $applicableModifiers = $profile->optionModifiers
+            ->filter(fn (OptionPriceModifier $modifier) => $selectedOptionLabels->has($modifier->component_option_id));
+
+        $rows = [];
+
+        foreach ($profile->tiers as $tier) {
+            $basePrice = $tier->effectiveUnitPrice() * $tier->min_quantity;
+
+            [, $total] = $this->applyModifiers($basePrice, $tier->min_quantity, $applicableModifiers, $selectedOptionLabels);
+
+            $rows[] = [
+                'min_quantity' => $tier->min_quantity,
+                'max_quantity' => $tier->max_quantity,
+                'unit_price' => round($total / $tier->min_quantity, 2),
+                'total' => round($total, 2),
+            ];
+        }
+
+        return $rows;
     }
 
     /**

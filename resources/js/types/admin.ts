@@ -51,6 +51,7 @@ export type PricingTier = {
     min_quantity: number;
     max_quantity: number | null;
     unit_price: string;
+    adjustment_percent: string | null;
 };
 
 export type ModifierType = 'FIXED_ADD' | 'PERCENT_MULTIPLY' | 'PER_UNIT_ADD';

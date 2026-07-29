@@ -75,3 +75,42 @@ it('deletes an option', function () {
 
     expect($component->options()->count())->toBe(0);
 });
+
+it('moves an option up by swapping sort_order with its previous sibling', function () {
+    $component = makeChoiceComponent();
+    $first = $component->options()->create(['value' => 'gloss', 'label' => 'Brillante', 'sort_order' => 1]);
+    $second = $component->options()->create(['value' => 'matte', 'label' => 'Mate', 'sort_order' => 2]);
+
+    $this->actingAs(User::factory()->create())
+        ->patch(route('admin.components.options.move', [$component, $second]), ['direction' => 'up'])
+        ->assertRedirect(route('admin.components.edit', $component));
+
+    expect($first->fresh()->sort_order)->toBe(2)
+        ->and($second->fresh()->sort_order)->toBe(1);
+});
+
+it('does not move the first option further up', function () {
+    $component = makeChoiceComponent();
+    $first = $component->options()->create(['value' => 'gloss', 'label' => 'Brillante', 'sort_order' => 1]);
+    $second = $component->options()->create(['value' => 'matte', 'label' => 'Mate', 'sort_order' => 2]);
+
+    $this->actingAs(User::factory()->create())
+        ->patch(route('admin.components.options.move', [$component, $first]), ['direction' => 'up'])
+        ->assertRedirect(route('admin.components.edit', $component));
+
+    expect($first->fresh()->sort_order)->toBe(1)
+        ->and($second->fresh()->sort_order)->toBe(2);
+});
+
+it('moves an option down by swapping sort_order with its next sibling', function () {
+    $component = makeChoiceComponent();
+    $first = $component->options()->create(['value' => 'gloss', 'label' => 'Brillante', 'sort_order' => 1]);
+    $second = $component->options()->create(['value' => 'matte', 'label' => 'Mate', 'sort_order' => 2]);
+
+    $this->actingAs(User::factory()->create())
+        ->patch(route('admin.components.options.move', [$component, $first]), ['direction' => 'down'])
+        ->assertRedirect(route('admin.components.edit', $component));
+
+    expect($first->fresh()->sort_order)->toBe(2)
+        ->and($second->fresh()->sort_order)->toBe(1);
+});

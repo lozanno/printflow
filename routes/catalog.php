@@ -8,6 +8,8 @@ Route::get('/', [CatalogController::class, 'index'])->name('home');
 
 Route::post('{catalogProduct:slug}/cotizar', [QuoteController::class, 'store'])->name('catalog.quote');
 
+Route::post('{catalogProduct:slug}/rangos-precio', [QuoteController::class, 'tierTable'])->name('catalog.tier-table');
+
 // Reserved top-level segments used by other route files (auth, admin,
 // dashboard, settings...) must never be swallowed by this catch-all, since
 // it resolves against the CatalogProduct/Category slug columns instead of

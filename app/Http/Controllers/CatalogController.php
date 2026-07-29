@@ -79,7 +79,10 @@ class CatalogController extends Controller
                     ->map(fn (PricingTier $tier) => [
                         'min_quantity' => $tier->min_quantity,
                         'max_quantity' => $tier->max_quantity,
-                        'unit_price' => (float) $tier->unit_price,
+                        // adjustment_percent itself never leaves the server -
+                        // only its effect on the price does.
+                        'unit_price' => $tier->effectiveUnitPrice(),
+                        'total' => round($tier->effectiveUnitPrice() * $tier->min_quantity, 2),
                     ])
                     ->all() ?? [],
             ],

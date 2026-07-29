@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePricingTierRequest;
+use App\Http\Requests\Admin\UpdatePricingTierRequest;
 use App\Models\CatalogProduct;
 use App\Models\PricingTier;
 use Illuminate\Http\RedirectResponse;
@@ -16,6 +17,17 @@ class PricingTierController extends Controller
         $catalogProduct->pricingProfile->tiers()->create($request->validated());
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Rango de precio agregado.')]);
+
+        return to_route('admin.catalog-products.edit', $catalogProduct);
+    }
+
+    public function update(UpdatePricingTierRequest $request, CatalogProduct $catalogProduct, PricingTier $tier): RedirectResponse
+    {
+        abort_if($tier->pricing_profile_id !== $catalogProduct->pricingProfile->id, 404);
+
+        $tier->update($request->validated());
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Rango de precio actualizado.')]);
 
         return to_route('admin.catalog-products.edit', $catalogProduct);
     }

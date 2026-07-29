@@ -1,5 +1,6 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 import CatalogProductController from '@/actions/App/Http/Controllers/Admin/CatalogProductController';
 import OptionPriceModifierController from '@/actions/App/Http/Controllers/Admin/OptionPriceModifierController';
 import PricingTierController from '@/actions/App/Http/Controllers/Admin/PricingTierController';
@@ -50,6 +51,7 @@ export default function CatalogProductsEdit({
     optionModifiersByOptionId: Record<number, OptionModifier>;
     availableCategories: Category[];
 }) {
+    const [editingTierId, setEditingTierId] = useState<number | null>(null);
     const strategy = catalogProduct.product_template?.pricing_strategy;
     const tiers = catalogProduct.pricing_profile?.tiers ?? [];
     const priceableComponents = (
@@ -263,53 +265,219 @@ export default function CatalogProductsEdit({
                                             <TableHead>
                                                 Precio por pieza
                                             </TableHead>
+                                            <TableHead>Ajuste %</TableHead>
                                             <TableHead className="text-right">
                                                 Acciones
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {tiers.map((tier) => (
-                                            <TableRow key={tier.id}>
-                                                <TableCell>
-                                                    {tier.min_quantity}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {tier.max_quantity ??
-                                                        'Sin limite'}
-                                                </TableCell>
-                                                <TableCell>
-                                                    {tier.unit_price}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Form
-                                                        {...PricingTierController.destroy.form(
-                                                            [
-                                                                catalogProduct.id,
-                                                                tier.id,
-                                                            ],
-                                                        )}
-                                                    >
-                                                        {({
-                                                            processing:
-                                                                deleting,
-                                                        }) => (
+                                        {tiers.map((tier) =>
+                                            editingTierId === tier.id ? (
+                                                <TableRow key={tier.id}>
+                                                    <TableCell colSpan={5}>
+                                                        <Form
+                                                            {...PricingTierController.update.form(
+                                                                [
+                                                                    catalogProduct.id,
+                                                                    tier.id,
+                                                                ],
+                                                            )}
+                                                            onSuccess={() =>
+                                                                setEditingTierId(
+                                                                    null,
+                                                                )
+                                                            }
+                                                            className="flex flex-wrap items-end gap-3 py-2"
+                                                        >
+                                                            {({
+                                                                processing,
+                                                                errors,
+                                                            }) => (
+                                                                <>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_min_quantity_${tier.id}`}
+                                                                        >
+                                                                            Desde
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_min_quantity_${tier.id}`}
+                                                                            name="min_quantity"
+                                                                            type="number"
+                                                                            min="0"
+                                                                            required
+                                                                            defaultValue={
+                                                                                tier.min_quantity
+                                                                            }
+                                                                            className="w-24"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.min_quantity
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_max_quantity_${tier.id}`}
+                                                                        >
+                                                                            Hasta
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_max_quantity_${tier.id}`}
+                                                                            name="max_quantity"
+                                                                            type="number"
+                                                                            min="0"
+                                                                            defaultValue={
+                                                                                tier.max_quantity ??
+                                                                                ''
+                                                                            }
+                                                                            className="w-24"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.max_quantity
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_unit_price_${tier.id}`}
+                                                                        >
+                                                                            Precio
+                                                                            por
+                                                                            pieza
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_unit_price_${tier.id}`}
+                                                                            name="unit_price"
+                                                                            type="number"
+                                                                            step="0.01"
+                                                                            min="0"
+                                                                            required
+                                                                            defaultValue={
+                                                                                tier.unit_price
+                                                                            }
+                                                                            className="w-28"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.unit_price
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <div className="grid gap-2">
+                                                                        <Label
+                                                                            htmlFor={`edit_adjustment_percent_${tier.id}`}
+                                                                        >
+                                                                            Ajuste
+                                                                            %
+                                                                        </Label>
+                                                                        <Input
+                                                                            id={`edit_adjustment_percent_${tier.id}`}
+                                                                            name="adjustment_percent"
+                                                                            type="number"
+                                                                            step="0.001"
+                                                                            defaultValue={
+                                                                                tier.adjustment_percent ??
+                                                                                ''
+                                                                            }
+                                                                            className="w-24"
+                                                                        />
+                                                                        <InputError
+                                                                            message={
+                                                                                errors.adjustment_percent
+                                                                            }
+                                                                        />
+                                                                    </div>
+                                                                    <Button
+                                                                        type="submit"
+                                                                        disabled={
+                                                                            processing
+                                                                        }
+                                                                    >
+                                                                        Guardar
+                                                                    </Button>
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        aria-label="Cancelar"
+                                                                        onClick={() =>
+                                                                            setEditingTierId(
+                                                                                null,
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <X />
+                                                                    </Button>
+                                                                </>
+                                                            )}
+                                                        </Form>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                <TableRow key={tier.id}>
+                                                    <TableCell>
+                                                        {tier.min_quantity}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {tier.max_quantity ??
+                                                            'Sin limite'}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {tier.unit_price}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {tier.adjustment_percent ??
+                                                            '—'}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
                                                             <Button
-                                                                type="submit"
+                                                                type="button"
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                disabled={
-                                                                    deleting
+                                                                aria-label="Editar rango"
+                                                                onClick={() =>
+                                                                    setEditingTierId(
+                                                                        tier.id,
+                                                                    )
                                                                 }
-                                                                aria-label="Eliminar rango"
                                                             >
-                                                                <Trash2 />
+                                                                <Pencil />
                                                             </Button>
-                                                        )}
-                                                    </Form>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                                            <Form
+                                                                {...PricingTierController.destroy.form(
+                                                                    [
+                                                                        catalogProduct.id,
+                                                                        tier.id,
+                                                                    ],
+                                                                )}
+                                                            >
+                                                                {({
+                                                                    processing:
+                                                                        deleting,
+                                                                }) => (
+                                                                    <Button
+                                                                        type="submit"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        disabled={
+                                                                            deleting
+                                                                        }
+                                                                        aria-label="Eliminar rango"
+                                                                    >
+                                                                        <Trash2 />
+                                                                    </Button>
+                                                                )}
+                                                            </Form>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ),
+                                        )}
                                     </TableBody>
                                 </Table>
                             ) : (
@@ -375,6 +543,23 @@ export default function CatalogProductsEdit({
                                             />
                                             <InputError
                                                 message={errors.unit_price}
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="adjustment_percent">
+                                                Ajuste % (opcional)
+                                            </Label>
+                                            <Input
+                                                id="adjustment_percent"
+                                                name="adjustment_percent"
+                                                type="number"
+                                                step="0.001"
+                                                className="w-24"
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.adjustment_percent
+                                                }
                                             />
                                         </div>
                                         <Button
