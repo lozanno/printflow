@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property InputType $input_type
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read ProductTemplateComponent|null $pivot Set only when loaded via ProductTemplate::components().
  */
 #[Fillable(['code', 'label', 'input_type'])]
 class Component extends Model
