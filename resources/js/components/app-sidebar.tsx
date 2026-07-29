@@ -3,6 +3,7 @@ import {
     BookOpen,
     FolderGit2,
     LayoutGrid,
+    Package,
     SlidersHorizontal,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { index as componentsIndex } from '@/routes/admin/components';
+import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -32,6 +34,11 @@ const mainNavItems: NavItem[] = [
         title: 'Componentes',
         href: componentsIndex(),
         icon: SlidersHorizontal,
+    },
+    {
+        title: 'Plantillas de producto',
+        href: productTemplatesIndex(),
+        icon: Package,
     },
 ];
 

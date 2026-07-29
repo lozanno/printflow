@@ -16,3 +16,22 @@ export type Component = {
     options_count?: number;
     options?: ComponentOption[];
 };
+
+export type PricingStrategy =
+    'PER_UNIT_TIERED' | 'PER_AREA' | 'PER_AREA_WITH_SETUP';
+
+export type AttachedComponent = Component & {
+    pivot: {
+        sort_order: number;
+        is_required: boolean;
+    };
+};
+
+export type ProductTemplate = {
+    id: number;
+    code: string;
+    name: string;
+    pricing_strategy: PricingStrategy;
+    components_count?: number;
+    components?: AttachedComponent[];
+};

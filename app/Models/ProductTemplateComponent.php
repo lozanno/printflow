@@ -19,6 +19,11 @@ use Illuminate\Support\Carbon;
 #[Fillable(['product_template_id', 'component_id', 'sort_order', 'is_required'])]
 class ProductTemplateComponent extends Pivot
 {
+    // Pivot::getTable() defaults to the singular of the class name
+    // (AsPivot::getTable()), which doesn't match the migration's plural
+    // table name.
+    protected $table = 'product_template_components';
+
     public $incrementing = true;
 
     /**
