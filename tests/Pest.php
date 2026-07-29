@@ -1,5 +1,11 @@
 <?php
 
+use App\Enums\InputType;
+use App\Enums\PricingStrategy;
+use App\Models\CatalogProduct;
+use App\Models\Component;
+use App\Models\ProductTemplate;
+use App\Models\Shop;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -44,7 +50,58 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Creates a Shop, a ProductTemplate on the given strategy, a CatalogProduct
+ * activating it, and an empty PricingProfile - the minimum fixture any
+ * QuoteEngine or public catalog test needs to build on.
+ */
+function makeCatalogProduct(PricingStrategy $strategy): CatalogProduct
 {
-    // ..
+    $shop = Shop::create([
+        'name' => 'Test Shop',
+        'slug' => 'test-shop-'.uniqid(),
+        'currency' => 'MXN',
+    ]);
+
+    $template = ProductTemplate::create([
+        'code' => 'template-'.uniqid(),
+        'name' => 'Test Template',
+        'pricing_strategy' => $strategy,
+    ]);
+
+    $catalogProduct = $shop->catalogProducts()->create([
+        'product_template_id' => $template->id,
+        'is_active' => true,
+    ]);
+
+    $catalogProduct->pricingProfile()->create();
+
+    return $catalogProduct->fresh();
+}
+
+/**
+ * Creates a Component and attaches it to the given ProductTemplate.
+ *
+ * @param  list<array{0: string, 1: string}>  $options
+ */
+function attachComponent(
+    ProductTemplate $template,
+    string $code,
+    string $label,
+    InputType $type,
+    bool $required = true,
+    array $options = [],
+): Component {
+    $component = Component::create(['code' => $code, 'label' => $label, 'input_type' => $type]);
+
+    $template->components()->attach($component->id, [
+        'sort_order' => ($template->templateComponents()->max('sort_order') ?? 0) + 1,
+        'is_required' => $required,
+    ]);
+
+    foreach ($options as $i => [$value, $optionLabel]) {
+        $component->options()->create(['value' => $value, 'label' => $optionLabel, 'sort_order' => $i]);
+    }
+
+    return $component->fresh();
 }
