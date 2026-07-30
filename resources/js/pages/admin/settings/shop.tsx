@@ -15,6 +15,56 @@ import { Label } from '@/components/ui/label';
 import { dashboard } from '@/routes';
 import type { Shop } from '@/types';
 
+const DEFAULT_COLOR = '#18181b';
+
+function ColorField({
+    id,
+    label,
+    description,
+    defaultValue,
+    error,
+}: {
+    id: string;
+    label: string;
+    description: string;
+    defaultValue: string | null;
+    error?: string;
+}) {
+    return (
+        <div className="grid gap-2">
+            <Label htmlFor={id}>{label}</Label>
+            <p className="text-sm text-muted-foreground">{description}</p>
+            <div className="flex items-center gap-3">
+                <Input
+                    id={id}
+                    name={id}
+                    type="color"
+                    className="h-10 w-16 p-1"
+                    defaultValue={defaultValue ?? DEFAULT_COLOR}
+                />
+                <Input
+                    aria-label={`${label} (hex)`}
+                    className="w-32 font-mono"
+                    defaultValue={defaultValue ?? DEFAULT_COLOR}
+                    onChange={(event) => {
+                        const colorInput = document.getElementById(
+                            id,
+                        ) as HTMLInputElement | null;
+
+                        if (
+                            colorInput &&
+                            /^#[0-9a-fA-F]{6}$/.test(event.target.value)
+                        ) {
+                            colorInput.value = event.target.value;
+                        }
+                    }}
+                />
+            </div>
+            <InputError message={error} />
+        </div>
+    );
+}
+
 export default function ShopSettings({ shop }: { shop: Shop }) {
     return (
         <>
@@ -26,10 +76,7 @@ export default function ShopSettings({ shop }: { shop: Shop }) {
                     description="Marca, contacto y direccion de recoleccion que se muestran en el sitio publico."
                 />
 
-                <Form
-                    {...ShopController.update.form()}
-                    className="space-y-8"
-                >
+                <Form {...ShopController.update.form()} className="space-y-8">
                     {({ processing, errors }) => (
                         <>
                             <Card>
@@ -51,9 +98,7 @@ export default function ShopSettings({ shop }: { shop: Shop }) {
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="currency">
-                                            Moneda
-                                        </Label>
+                                        <Label htmlFor="currency">Moneda</Label>
                                         <Input
                                             id="currency"
                                             name="currency"
@@ -62,9 +107,7 @@ export default function ShopSettings({ shop }: { shop: Shop }) {
                                             className="w-24 font-mono uppercase"
                                             defaultValue={shop.currency}
                                         />
-                                        <InputError
-                                            message={errors.currency}
-                                        />
+                                        <InputError message={errors.currency} />
                                     </div>
                                 </CardContent>
                             </Card>
@@ -73,15 +116,13 @@ export default function ShopSettings({ shop }: { shop: Shop }) {
                                 <CardHeader>
                                     <CardTitle>Marca</CardTitle>
                                     <CardDescription>
-                                        El logotipo y color aparecen en el
-                                        encabezado del sitio publico.
+                                        El logotipo y los colores se usan en el
+                                        sitio publico.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="logo">
-                                            Logotipo
-                                        </Label>
+                                        <Label htmlFor="logo">Logotipo</Label>
                                         {shop.logo_url && (
                                             <img
                                                 src={shop.logo_url}
@@ -99,51 +140,21 @@ export default function ShopSettings({ shop }: { shop: Shop }) {
                                         <InputError message={errors.logo} />
                                     </div>
 
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="brand_color">
-                                            Color de marca
-                                        </Label>
-                                        <div className="flex items-center gap-3">
-                                            <Input
-                                                id="brand_color"
-                                                name="brand_color"
-                                                type="color"
-                                                className="h-10 w-16 p-1"
-                                                defaultValue={
-                                                    shop.brand_color ??
-                                                    '#18181b'
-                                                }
-                                            />
-                                            <Input
-                                                aria-label="Color de marca (hex)"
-                                                className="w-32 font-mono"
-                                                defaultValue={
-                                                    shop.brand_color ??
-                                                    '#18181b'
-                                                }
-                                                onChange={(event) => {
-                                                    const colorInput =
-                                                        document.getElementById(
-                                                            'brand_color',
-                                                        ) as HTMLInputElement | null;
+                                    <ColorField
+                                        id="brand_color"
+                                        label="Color principal"
+                                        description="Color base de la marca."
+                                        defaultValue={shop.brand_color}
+                                        error={errors.brand_color}
+                                    />
 
-                                                    if (
-                                                        colorInput &&
-                                                        /^#[0-9a-fA-F]{6}$/.test(
-                                                            event.target
-                                                                .value,
-                                                        )
-                                                    ) {
-                                                        colorInput.value =
-                                                            event.target.value;
-                                                    }
-                                                }}
-                                            />
-                                        </div>
-                                        <InputError
-                                            message={errors.brand_color}
-                                        />
-                                    </div>
+                                    <ColorField
+                                        id="accent_color"
+                                        label="Color de enfasis"
+                                        description="Se usa en los botones de accion, el borde de las opciones seleccionadas y el hover de los links del menu y el pie de pagina."
+                                        defaultValue={shop.accent_color}
+                                        error={errors.accent_color}
+                                    />
                                 </CardContent>
                             </Card>
 

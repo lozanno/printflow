@@ -143,3 +143,62 @@
         @apply bg-background text-foreground;
     }
 }
+
+/*
+ * Collapsible sections (<details>/<summary>) inserted via the "Seccion
+ * plegable" button in RichTextEditor. Two shapes need styling: the final
+ * sanitized <details> markup (public storefront, and any other read-only
+ * `.prose` rendering), and Tiptap's live NodeView markup while editing
+ * (a plain <div data-type="details"> - see rich-text-editor.tsx for why).
+ */
+.prose details {
+    @apply my-4 rounded-lg border border-zinc-200 px-4 py-3;
+}
+
+.prose details summary {
+    @apply cursor-pointer list-none font-semibold text-zinc-900 marker:content-none;
+}
+
+.prose details summary::-webkit-details-marker {
+    display: none;
+}
+
+.prose details summary::before {
+    content: '▸';
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.25em;
+    transition: transform 0.15s ease;
+}
+
+.prose details[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.prose details > div[data-type='detailsContent'] {
+    @apply mt-2;
+}
+
+.prose div[data-type='details'] {
+    @apply my-4 flex items-start gap-1 rounded-lg border border-zinc-200 px-4 py-3;
+}
+
+.prose div[data-type='details'] > button {
+    @apply mt-0.5 shrink-0 cursor-pointer border-0 bg-transparent p-0 leading-none;
+}
+
+.prose div[data-type='details'] > div {
+    @apply min-w-0 flex-1;
+}
+
+.prose div[data-type='details'] summary {
+    @apply cursor-pointer list-none font-semibold text-zinc-900 marker:content-none;
+}
+
+.prose div[data-type='details'] summary::-webkit-details-marker {
+    display: none;
+}
+
+.prose div[data-type='detailsContent'] {
+    @apply mt-2;
+}

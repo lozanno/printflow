@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\PricingStrategy;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCatalogProductRequest;
+use App\Http\Requests\Admin\UpdateCatalogProductDetailsRequest;
 use App\Http\Requests\Admin\UpdateCatalogProductRequest;
 use App\Models\CatalogProduct;
 use App\Models\ProductTemplate;
@@ -71,6 +72,8 @@ class CatalogProductController extends Controller
             'pricingProfile.tiers',
             'pricingProfile.optionModifiers.componentOption.component',
             'categories',
+            'faqs',
+            'reviews',
         ]);
 
         /** @var array<int, array{id: int, modifier_type: string, value: string}> $optionModifiersByOptionId */
@@ -100,6 +103,7 @@ class CatalogProductController extends Controller
             'slug' => $request->validated('slug'),
             'description' => $request->validated('description'),
             'is_active' => $request->boolean('is_active'),
+            'is_featured' => $request->boolean('is_featured'),
         ];
 
         if ($request->hasFile('image')) {
@@ -128,6 +132,17 @@ class CatalogProductController extends Controller
         $catalogProduct->pricingProfile->update(['params' => $params]);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Producto de catalogo actualizado.')]);
+
+        return to_route('admin.catalog-products.edit', $catalogProduct);
+    }
+
+    public function updateDetails(UpdateCatalogProductDetailsRequest $request, CatalogProduct $catalogProduct): RedirectResponse
+    {
+        $this->ensureBelongsToCurrentShop($catalogProduct);
+
+        $catalogProduct->update(['details_content' => $request->validated('details_content')]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Informacion actualizada.')]);
 
         return to_route('admin.catalog-products.edit', $catalogProduct);
     }

@@ -110,6 +110,61 @@ it('does not expose pricing internals on the show page', function () {
         );
 });
 
+it('includes faqs, reviews and sanitized details content on the show page', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->update(['details_content' => '<p>Impresas en couche.</p><script>alert(1)</script>']);
+    $catalogProduct->faqs()->create(['question' => '¿Envian?', 'answer' => 'Si.', 'sort_order' => 0]);
+    $catalogProduct->reviews()->create(['author_name' => 'Ana', 'rating' => 5, 'comment' => 'Muy bien.', 'sort_order' => 0]);
+
+    $this->get("/{$catalogProduct->slug}")
+        ->assertInertia(fn ($page) => $page
+            ->component('catalog/show')
+            ->where('catalogProduct.details_content', '<p>Impresas en couche.</p>')
+            ->has('catalogProduct.faqs', 1)
+            ->where('catalogProduct.faqs.0.question', '¿Envian?')
+            ->has('catalogProduct.reviews', 1)
+            ->where('catalogProduct.reviews.0.author_name', 'Ana')
+        );
+});
+
+it('lists other featured active products but excludes the current one', function () {
+    $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
+    $catalogProduct->update(['is_featured' => true]);
+
+    $otherTemplate = ProductTemplate::create([
+        'code' => 'featured-template-'.uniqid(),
+        'name' => 'Featured Template',
+        'pricing_strategy' => PricingStrategy::PerUnitTiered,
+    ]);
+    $featured = $catalogProduct->shop->catalogProducts()->create([
+        'product_template_id' => $otherTemplate->id,
+        'slug' => 'other-featured-'.uniqid(),
+        'is_active' => true,
+        'is_featured' => true,
+    ]);
+    $featured->pricingProfile()->create();
+
+    $thirdTemplate = ProductTemplate::create([
+        'code' => 'not-featured-template-'.uniqid(),
+        'name' => 'Not Featured Template',
+        'pricing_strategy' => PricingStrategy::PerUnitTiered,
+    ]);
+    $notFeatured = $catalogProduct->shop->catalogProducts()->create([
+        'product_template_id' => $thirdTemplate->id,
+        'slug' => 'not-featured-'.uniqid(),
+        'is_active' => true,
+        'is_featured' => false,
+    ]);
+    $notFeatured->pricingProfile()->create();
+
+    $this->get("/{$catalogProduct->slug}")
+        ->assertInertia(fn ($page) => $page
+            ->component('catalog/show')
+            ->has('featuredProducts', 1)
+            ->where('featuredProducts.0.id', $featured->id)
+        );
+});
+
 it('404s for an inactive product', function () {
     $catalogProduct = makeCatalogProduct(PricingStrategy::PerUnitTiered);
     $catalogProduct->update(['is_active' => false]);

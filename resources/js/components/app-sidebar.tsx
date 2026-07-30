@@ -13,6 +13,7 @@ import {
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
+import type { NavMainEntry } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
@@ -32,7 +33,7 @@ import { index as productTemplatesIndex } from '@/routes/admin/product-templates
 import { edit as shopSettingsEdit } from '@/routes/admin/settings';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
+const mainNavItems: NavMainEntry[] = [
     {
         title: 'Dashboard',
         href: dashboard(),
@@ -58,11 +59,13 @@ const mainNavItems: NavItem[] = [
         href: categoriesIndex(),
         icon: Tag,
     },
+    { separator: true },
     {
         title: 'Paginas',
         href: pagesIndex(),
         icon: FileText,
     },
+    { separator: true },
     {
         title: 'Ajustes de la tienda',
         href: shopSettingsEdit(),

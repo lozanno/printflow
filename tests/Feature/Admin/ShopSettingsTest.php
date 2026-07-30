@@ -17,6 +17,7 @@ it('updates the shop branding and contact fields', function () {
             'name' => 'Nueva Imprenta',
             'currency' => 'USD',
             'brand_color' => '#ff0000',
+            'accent_color' => '#00ff00',
             'contact_email' => 'hola@nuevaimprenta.mx',
             'facebook_url' => 'https://facebook.com/nuevaimprenta',
             'instagram_url' => 'https://instagram.com/nuevaimprenta',
@@ -29,6 +30,7 @@ it('updates the shop branding and contact fields', function () {
     expect($shop->name)->toBe('Nueva Imprenta')
         ->and($shop->currency)->toBe('USD')
         ->and($shop->brand_color)->toBe('#ff0000')
+        ->and($shop->accent_color)->toBe('#00ff00')
         ->and($shop->contact_email)->toBe('hola@nuevaimprenta.mx')
         ->and($shop->facebook_url)->toBe('https://facebook.com/nuevaimprenta');
 });

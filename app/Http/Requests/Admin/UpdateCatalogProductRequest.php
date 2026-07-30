@@ -40,6 +40,7 @@ class UpdateCatalogProductRequest extends FormRequest
             // StoreProductTemplateComponentRequest for why this isn't
             // the strict `boolean` rule.
             'is_active' => ['sometimes', 'in:on'],
+            'is_featured' => ['sometimes', 'in:on'],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => [
                 'integer',

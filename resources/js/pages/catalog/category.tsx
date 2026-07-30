@@ -31,7 +31,7 @@ export default function CatalogCategory({
                         &larr; Volver al catalogo
                     </Link>
 
-                    <h1 className="mt-4 text-4xl font-bold tracking-tight text-zinc-900">
+                    <h1 className="mt-4 text-4xl font-bold tracking-tight text-[var(--shop-primary)]">
                         {category.name}
                     </h1>
 

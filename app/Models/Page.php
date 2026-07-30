@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use HTMLPurifier;
-use HTMLPurifier_Config;
+use App\Support\HtmlSanitizer;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\File;
 
 /**
  * @property int $id
@@ -44,35 +42,14 @@ class Page extends Model
 
     /**
      * Content is rendered as raw HTML on the storefront, so it's sanitized
-     * on the way in (not just trusted because only admins can write it) -
-     * this stays safe even if an admin account is ever compromised, or the
-     * app grows into multi-tenant with less-trusted per-shop staff.
+     * on the way in - see HtmlSanitizer for why.
      *
      * @return Attribute<string|null, string|null>
      */
     protected function content(): Attribute
     {
         return Attribute::make(
-            set: fn (?string $value): ?string => $value !== null ? self::purifier()->purify($value) : null,
+            set: fn (?string $value): ?string => HtmlSanitizer::sanitize($value),
         );
-    }
-
-    private static function purifier(): HTMLPurifier
-    {
-        static $purifier = null;
-
-        if ($purifier === null) {
-            $cachePath = storage_path('framework/cache/htmlpurifier');
-            File::ensureDirectoryExists($cachePath);
-
-            $config = HTMLPurifier_Config::createDefault();
-            $config->set('HTML.Allowed', 'p,br,strong,em,h2,h3,ul,ol,li,a[href],img[src|alt],blockquote,code,pre,hr');
-            $config->set('AutoFormat.RemoveEmpty', true);
-            $config->set('Cache.SerializerPath', $cachePath);
-
-            $purifier = new HTMLPurifier($config);
-        }
-
-        return $purifier;
     }
 }

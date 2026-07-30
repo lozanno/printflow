@@ -1,9 +1,15 @@
+import {
+    Details,
+    DetailsContent as BaseDetailsContent,
+    DetailsSummary,
+} from '@tiptap/extension-details';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
     Bold,
+    ChevronsDownUp,
     Heading2,
     Image as ImageIcon,
     Italic,
@@ -24,6 +30,35 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+
+// The server-side sanitizer (HtmlSanitizer) strips the data-type attribute
+// from the details-content wrapper div (HTMLPurifier doesn't preserve
+// custom data-* attributes), so parsing back a saved value must also accept
+// a bare <div> rather than relying on `div[data-type="detailsContent"]`.
+const DetailsContent = BaseDetailsContent.extend({
+    parseHTML() {
+        return [{ tag: 'div' }];
+    },
+});
+
+// The extension's default toggle button has no visible icon (only an
+// aria-label) - a plain chevron makes the collapsible section recognizable
+// while editing, matching the ▸/▾ look applied to the final <details> via
+// app.css for read-only rendering.
+function renderToggleButton({
+    element,
+    isOpen,
+}: {
+    element: HTMLButtonElement;
+    isOpen: boolean;
+}) {
+    element.textContent = isOpen ? '▾' : '▸';
+    element.setAttribute(
+        'aria-label',
+        isOpen ? 'Contraer seccion' : 'Expandir seccion',
+    );
+    element.className = 'mr-1 w-4 text-zinc-500';
+}
 
 function ToolbarButton({
     onClick,
@@ -67,6 +102,9 @@ export function RichTextEditor({
             StarterKit,
             Image,
             Link.configure({ openOnClick: false }),
+            Details.configure({ persist: true, renderToggleButton }),
+            DetailsSummary,
+            DetailsContent,
         ],
         content: defaultValue ?? '',
         onUpdate: ({ editor }) => setHtml(editor.getHTML()),
@@ -149,6 +187,13 @@ export function RichTextEditor({
                     }}
                 >
                     <ImageIcon className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                    label="Seccion plegable"
+                    active={editor.isActive('details')}
+                    onClick={() => editor.chain().focus().setDetails().run()}
+                >
+                    <ChevronsDownUp className="size-4" />
                 </ToolbarButton>
             </div>
 

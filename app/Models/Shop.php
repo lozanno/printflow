@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $logo_path
  * @property string|null $logo_url
  * @property string|null $brand_color
+ * @property string|null $accent_color
  * @property string|null $contact_email
  * @property string|null $facebook_url
  * @property string|null $instagram_url
@@ -42,6 +43,7 @@ use Illuminate\Support\Facades\Storage;
     'pickup_phone',
     'logo_path',
     'brand_color',
+    'accent_color',
     'contact_email',
     'facebook_url',
     'instagram_url',

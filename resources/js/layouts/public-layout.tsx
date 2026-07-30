@@ -14,7 +14,15 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             footer.contact.whatsapp_url);
 
     return (
-        <div className="flex min-h-screen flex-col bg-zinc-50">
+        <div
+            className="flex min-h-screen flex-col bg-zinc-50"
+            style={
+                {
+                    '--shop-primary': shop?.brand_color || '#18181b',
+                    '--shop-accent': shop?.accent_color || '#18181b',
+                } as React.CSSProperties
+            }
+        >
             <header className="border-b border-zinc-200 bg-white">
                 <div className="mx-auto flex max-w-4xl items-center px-6 py-4">
                     <Link
@@ -49,7 +57,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                         <li key={category.slug}>
                                             <Link
                                                 href={show(category.slug)}
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 {category.title}
                                             </Link>
@@ -69,7 +77,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                         <li key={page.slug}>
                                             <Link
                                                 href={show(page.slug)}
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 {page.title}
                                             </Link>
@@ -89,7 +97,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                         <li>
                                             <a
                                                 href={`mailto:${footer.contact.email}`}
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 {footer.contact.email}
                                             </a>
@@ -103,10 +111,12 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     {footer.contact.whatsapp_url && (
                                         <li>
                                             <a
-                                                href={footer.contact.whatsapp_url}
+                                                href={
+                                                    footer.contact.whatsapp_url
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 WhatsApp
                                             </a>
@@ -115,10 +125,12 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     {footer.contact.facebook_url && (
                                         <li>
                                             <a
-                                                href={footer.contact.facebook_url}
+                                                href={
+                                                    footer.contact.facebook_url
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 Facebook
                                             </a>
@@ -127,10 +139,12 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                                     {footer.contact.instagram_url && (
                                         <li>
                                             <a
-                                                href={footer.contact.instagram_url}
+                                                href={
+                                                    footer.contact.instagram_url
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-zinc-600 hover:text-zinc-900"
+                                                className="text-sm text-zinc-600 hover:text-[var(--shop-accent)]"
                                             >
                                                 Instagram
                                             </a>

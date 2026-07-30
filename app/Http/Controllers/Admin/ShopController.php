@@ -33,6 +33,7 @@ class ShopController extends Controller
             'pickup_postal_code' => $request->validated('pickup_postal_code'),
             'pickup_phone' => $request->validated('pickup_phone'),
             'brand_color' => $request->validated('brand_color'),
+            'accent_color' => $request->validated('accent_color'),
             'contact_email' => $request->validated('contact_email'),
             'facebook_url' => $request->validated('facebook_url'),
             'instagram_url' => $request->validated('instagram_url'),

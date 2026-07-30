@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\CatalogProductController;
+use App\Http\Controllers\Admin\CatalogProductFaqController;
+use App\Http\Controllers\Admin\CatalogProductReviewController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ComponentController;
 use App\Http\Controllers\Admin\ComponentOptionController;
@@ -64,4 +66,31 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
 
     Route::delete('catalog-products/{catalog_product}/option-modifiers/{modifier}', [OptionPriceModifierController::class, 'destroy'])
         ->name('catalog-products.option-modifiers.destroy');
+
+    Route::put('catalog-products/{catalog_product}/details', [CatalogProductController::class, 'updateDetails'])
+        ->name('catalog-products.details.update');
+
+    Route::post('catalog-products/{catalog_product}/faqs', [CatalogProductFaqController::class, 'store'])
+        ->name('catalog-products.faqs.store');
+
+    Route::put('catalog-products/{catalog_product}/faqs/{faq}', [CatalogProductFaqController::class, 'update'])
+        ->name('catalog-products.faqs.update');
+
+    Route::patch('catalog-products/{catalog_product}/faqs/{faq}/move', [CatalogProductFaqController::class, 'move'])
+        ->name('catalog-products.faqs.move');
+
+    Route::delete('catalog-products/{catalog_product}/faqs/{faq}', [CatalogProductFaqController::class, 'destroy'])
+        ->name('catalog-products.faqs.destroy');
+
+    Route::post('catalog-products/{catalog_product}/reviews', [CatalogProductReviewController::class, 'store'])
+        ->name('catalog-products.reviews.store');
+
+    Route::put('catalog-products/{catalog_product}/reviews/{review}', [CatalogProductReviewController::class, 'update'])
+        ->name('catalog-products.reviews.update');
+
+    Route::patch('catalog-products/{catalog_product}/reviews/{review}/move', [CatalogProductReviewController::class, 'move'])
+        ->name('catalog-products.reviews.move');
+
+    Route::delete('catalog-products/{catalog_product}/reviews/{review}', [CatalogProductReviewController::class, 'destroy'])
+        ->name('catalog-products.reviews.destroy');
 });

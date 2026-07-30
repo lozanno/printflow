@@ -1,12 +1,12 @@
 import { Head, Link } from '@inertiajs/react';
-import { ChevronDown, ImageOff } from 'lucide-react';
+import { ChevronDown, ImageOff, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn, getCsrfToken, toUrl } from '@/lib/utils';
 import { home } from '@/routes';
-import { quote, tierTable } from '@/routes/catalog';
+import { quote, show, tierTable } from '@/routes/catalog';
 
 type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 type PricingStrategy = 'PER_UNIT_TIERED' | 'PER_AREA' | 'PER_AREA_WITH_SETUP';
@@ -32,16 +32,37 @@ type PricingTier = {
     total: number;
 };
 
+type ProductFaq = {
+    question: string;
+    answer: string;
+};
+
+type ProductReview = {
+    author_name: string;
+    rating: number;
+    comment: string;
+};
+
+type FeaturedProduct = {
+    id: number;
+    slug: string;
+    name: string;
+    image_url: string | null;
+};
+
 type CatalogProductDetail = {
     id: number;
     slug: string;
     name: string;
     image_url: string | null;
     description: string | null;
+    details_content: string | null;
     currency: string;
     pricing_strategy: PricingStrategy;
     components: ProductComponent[];
     pricing_tiers: PricingTier[];
+    faqs: ProductFaq[];
+    reviews: ProductReview[];
 };
 
 type QuoteModifier = {
@@ -164,7 +185,7 @@ function TableStyleOptions({
                     className={cn(
                         'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
                         selected === option.value
-                            ? 'border-zinc-900 bg-zinc-50 text-zinc-900 ring-1 ring-inset ring-zinc-900'
+                            ? 'border-[var(--shop-accent)] bg-zinc-50 text-zinc-900 ring-1 ring-[var(--shop-accent)] ring-inset'
                             : 'text-zinc-700 hover:bg-zinc-50',
                     )}
                 >
@@ -206,7 +227,7 @@ function IllustratedOptions({
                         className={cn(
                             'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition',
                             selected === option.value
-                                ? 'border-zinc-900 ring-1 ring-zinc-900'
+                                ? 'border-[var(--shop-accent)] ring-1 ring-[var(--shop-accent)]'
                                 : 'border-zinc-200 hover:border-zinc-400',
                         )}
                     >
@@ -281,7 +302,7 @@ function QuantityTable({
                         className={cn(
                             'grid w-full grid-cols-3 items-center border-t border-zinc-100 px-4 py-3 text-left text-sm transition',
                             selected === tier.min_quantity
-                                ? 'border-zinc-900 bg-zinc-50 ring-1 ring-inset ring-zinc-900'
+                                ? 'border-[var(--shop-accent)] bg-zinc-50 ring-1 ring-[var(--shop-accent)] ring-inset'
                                 : 'hover:bg-zinc-50',
                         )}
                     >
@@ -327,9 +348,7 @@ function DimensionsField({
         return (
             <div className="mt-3 flex max-w-72 gap-3">
                 <div className="flex-1">
-                    <Label className="text-xs text-zinc-500">
-                        Ancho (m)
-                    </Label>
+                    <Label className="text-xs text-zinc-500">Ancho (m)</Label>
                     <Input
                         type="number"
                         step="0.01"
@@ -391,9 +410,8 @@ function DimensionsField({
                         }}
                         className={cn(
                             'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
-                            !customMode &&
-                                selectedPresetValue === option.value
-                                ? 'border-zinc-900 bg-zinc-50 text-zinc-900 ring-1 ring-inset ring-zinc-900'
+                            !customMode && selectedPresetValue === option.value
+                                ? 'border-[var(--shop-accent)] bg-zinc-50 text-zinc-900 ring-1 ring-[var(--shop-accent)] ring-inset'
                                 : 'text-zinc-700 hover:bg-zinc-50',
                         )}
                     >
@@ -412,7 +430,7 @@ function DimensionsField({
                 className={cn(
                     'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
                     customMode
-                        ? 'border-zinc-900 bg-zinc-50 text-zinc-900 ring-1 ring-inset ring-zinc-900'
+                        ? 'border-[var(--shop-accent)] bg-zinc-50 text-zinc-900 ring-1 ring-[var(--shop-accent)] ring-inset'
                         : 'text-zinc-700 hover:bg-zinc-50',
                 )}
             >
@@ -452,10 +470,141 @@ function DimensionsField({
     );
 }
 
+function InfoSection({ html }: { html: string | null }) {
+    if (!html) {
+        return null;
+    }
+
+    return (
+        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <div
+                className="prose prose-sm max-w-none"
+                // details_content is sanitized server-side, see
+                // App\Support\HtmlSanitizer.
+                dangerouslySetInnerHTML={{ __html: html }}
+            />
+        </div>
+    );
+}
+
+function FaqSection({ faqs }: { faqs: ProductFaq[] }) {
+    if (faqs.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900">
+                Preguntas frecuentes
+            </h2>
+            <div className="mt-4 space-y-4">
+                {faqs.map((faq) => (
+                    <div key={faq.question}>
+                        <p className="font-semibold text-zinc-800">
+                            {faq.question}
+                        </p>
+                        <p className="mt-1 text-sm text-zinc-600">
+                            {faq.answer}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function ReviewStars({ rating }: { rating: number }) {
+    return (
+        <div className="flex gap-0.5" aria-label={`${rating} de 5 estrellas`}>
+            {[1, 2, 3, 4, 5].map((value) => (
+                <Star
+                    key={value}
+                    className={cn(
+                        'size-4',
+                        value <= rating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-zinc-300',
+                    )}
+                />
+            ))}
+        </div>
+    );
+}
+
+function ReviewsSlider({ reviews }: { reviews: ProductReview[] }) {
+    if (reviews.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900">Reseñas</h2>
+            <div className="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
+                {reviews.map((review) => (
+                    <div
+                        key={review.author_name}
+                        className="w-64 shrink-0 snap-start rounded-xl border border-zinc-200 p-4"
+                    >
+                        <ReviewStars rating={review.rating} />
+                        <p className="mt-2 text-sm text-zinc-600">
+                            {review.comment}
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-zinc-800">
+                            {review.author_name}
+                        </p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function FeaturedCarousel({ products }: { products: FeaturedProduct[] }) {
+    if (products.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mt-6 rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-zinc-900">
+                Tambien te puede interesar
+            </h2>
+            <div className="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
+                {products.map((product) => (
+                    <Link
+                        key={product.id}
+                        href={show(product.slug)}
+                        className="w-40 shrink-0 snap-start"
+                    >
+                        <div className="aspect-square overflow-hidden rounded-xl bg-zinc-100">
+                            {product.image_url ? (
+                                <img
+                                    src={product.image_url}
+                                    alt={product.name}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="flex h-full w-full items-center justify-center text-zinc-300">
+                                    <ImageOff className="size-8" />
+                                </div>
+                            )}
+                        </div>
+                        <p className="mt-2 truncate text-sm font-medium text-zinc-800">
+                            {product.name}
+                        </p>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+}
+
 export default function CatalogShow({
     catalogProduct,
+    featuredProducts,
 }: {
     catalogProduct: CatalogProductDetail;
+    featuredProducts: FeaturedProduct[];
 }) {
     const [selections, setSelections] = useState<Selections>({});
     const [quoteResult, setQuoteResult] = useState<QuoteResponse | null>(null);
@@ -610,7 +759,9 @@ export default function CatalogShow({
     const priceLabel = quoteResult
         ? formatMoney(quoteResult.total, quoteResult.currency)
         : (quoteError ??
-          (loading ? 'Calculando...' : 'Completa las opciones para ver tu precio'));
+          (loading
+              ? 'Calculando...'
+              : 'Completa las opciones para ver tu precio'));
 
     return (
         <>
@@ -641,7 +792,7 @@ export default function CatalogShow({
                         </div>
                     </div>
 
-                    <h1 className="mt-6 text-3xl font-bold tracking-tight text-zinc-900">
+                    <h1 className="mt-6 text-3xl font-bold tracking-tight text-[var(--shop-primary)]">
                         {catalogProduct.name}
                     </h1>
 
@@ -656,8 +807,7 @@ export default function CatalogShow({
                             const hasIllustratedOptions =
                                 component.input_type === 'CHOICE' &&
                                 component.options.some((o) => o.image_url);
-                            const selectedValue =
-                                selections[component.code];
+                            const selectedValue = selections[component.code];
 
                             return (
                                 <div key={component.code}>
@@ -711,8 +861,7 @@ export default function CatalogShow({
                                         />
                                     )}
 
-                                    {component.input_type ===
-                                        'DIMENSIONS' && (
+                                    {component.input_type === 'DIMENSIONS' && (
                                         <DimensionsField
                                             component={component}
                                             selected={
@@ -720,10 +869,7 @@ export default function CatalogShow({
                                                     ? selectedValue
                                                     : undefined
                                             }
-                                            onSelectPreset={(
-                                                width,
-                                                height,
-                                            ) =>
+                                            onSelectPreset={(width, height) =>
                                                 updateSelection(
                                                     component.code,
                                                     { width, height },
@@ -785,12 +931,17 @@ export default function CatalogShow({
                             <Button
                                 variant="default"
                                 disabled
-                                className="shrink-0"
+                                className="shrink-0 bg-[var(--shop-accent)] text-white hover:opacity-90"
                             >
                                 Agregar al carrito
                             </Button>
                         </div>
                     </div>
+
+                    <InfoSection html={catalogProduct.details_content} />
+                    <FaqSection faqs={catalogProduct.faqs} />
+                    <ReviewsSlider reviews={catalogProduct.reviews} />
+                    <FeaturedCarousel products={featuredProducts} />
                 </div>
             </div>
 
@@ -805,7 +956,11 @@ export default function CatalogShow({
                         <p className="text-xl font-bold">{priceLabel}</p>
                     </div>
 
-                    <Button variant="secondary" disabled className="shrink-0">
+                    <Button
+                        variant="secondary"
+                        disabled
+                        className="shrink-0 bg-[var(--shop-accent)] text-white hover:opacity-90"
+                    >
                         Continuar al pedido
                     </Button>
                 </div>

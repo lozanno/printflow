@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\InputType;
 use App\Models\CatalogProduct;
+use App\Models\CatalogProductFaq;
+use App\Models\CatalogProductReview;
 use App\Models\Category;
 use App\Models\Component;
 use App\Models\Page;
@@ -74,7 +76,13 @@ class CatalogController extends Controller
 
     private function showProduct(CatalogProduct $catalogProduct): Response
     {
-        $catalogProduct->load('productTemplate.components.options', 'pricingProfile.tiers', 'shop');
+        $catalogProduct->load(
+            'productTemplate.components.options',
+            'pricingProfile.tiers',
+            'shop',
+            'faqs',
+            'reviews',
+        );
 
         return Inertia::render('catalog/show', [
             'catalogProduct' => [
@@ -83,6 +91,7 @@ class CatalogController extends Controller
                 'name' => $catalogProduct->name_override ?? $catalogProduct->productTemplate->name,
                 'image_url' => $catalogProduct->image_url,
                 'description' => $catalogProduct->description,
+                'details_content' => $catalogProduct->details_content,
                 'currency' => $catalogProduct->shop->currency,
                 'pricing_strategy' => $catalogProduct->productTemplate->pricing_strategy,
                 'components' => $this->serializeComponents($catalogProduct->productTemplate->components),
@@ -96,7 +105,32 @@ class CatalogController extends Controller
                         'total' => round($tier->effectiveUnitPrice() * $tier->min_quantity, 2),
                     ])
                     ->all() ?? [],
+                'faqs' => $catalogProduct->faqs
+                    ->map(fn (CatalogProductFaq $faq) => [
+                        'question' => $faq->question,
+                        'answer' => $faq->answer,
+                    ]),
+                'reviews' => $catalogProduct->reviews
+                    ->map(fn (CatalogProductReview $review) => [
+                        'author_name' => $review->author_name,
+                        'rating' => $review->rating,
+                        'comment' => $review->comment,
+                    ]),
             ],
+            'featuredProducts' => CatalogProduct::query()
+                ->where('shop_id', $catalogProduct->shop_id)
+                ->where('is_active', true)
+                ->where('is_featured', true)
+                ->where('id', '!=', $catalogProduct->id)
+                ->with('productTemplate')
+                ->orderBy('created_at')
+                ->get()
+                ->map(fn (CatalogProduct $featured) => [
+                    'id' => $featured->id,
+                    'slug' => $featured->slug,
+                    'name' => $featured->name_override ?? $featured->productTemplate->name,
+                    'image_url' => $featured->image_url,
+                ]),
         ]);
     }
 

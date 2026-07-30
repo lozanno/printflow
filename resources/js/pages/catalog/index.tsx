@@ -34,7 +34,7 @@ export default function CatalogIndex({
                     <p className="text-sm font-semibold tracking-wide text-zinc-500 uppercase">
                         {shopName}
                     </p>
-                    <h1 className="mt-1 text-4xl font-bold tracking-tight text-zinc-900">
+                    <h1 className="mt-1 text-4xl font-bold tracking-tight text-[var(--shop-primary)]">
                         ¿Que deseas imprimir?
                     </h1>
                     <p className="mt-2 text-zinc-600">

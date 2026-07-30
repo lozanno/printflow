@@ -22,6 +22,7 @@ export type Shop = {
     pickup_phone: string | null;
     logo_url: string | null;
     brand_color: string | null;
+    accent_color: string | null;
     contact_email: string | null;
     facebook_url: string | null;
     instagram_url: string | null;
@@ -101,6 +102,23 @@ export type PricingProfile = {
     option_modifiers?: OptionPriceModifier[];
 };
 
+export type CatalogProductFaq = {
+    id: number;
+    catalog_product_id: number;
+    question: string;
+    answer: string;
+    sort_order: number;
+};
+
+export type CatalogProductReview = {
+    id: number;
+    catalog_product_id: number;
+    author_name: string;
+    rating: number;
+    comment: string;
+    sort_order: number;
+};
+
 export type CatalogProduct = {
     id: number;
     shop_id: number;
@@ -109,9 +127,13 @@ export type CatalogProduct = {
     slug: string | null;
     image_url: string | null;
     description: string | null;
+    details_content: string | null;
     is_active: boolean;
+    is_featured: boolean;
     product_template?: ProductTemplate;
     pricing_profile?: PricingProfile;
     pricing_profile_exists?: boolean;
     categories?: Category[];
+    faqs?: CatalogProductFaq[];
+    reviews?: CatalogProductReview[];
 };

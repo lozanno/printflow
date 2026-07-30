@@ -52,6 +52,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => $shop->name,
                 'logo_url' => $shop->logo_url,
                 'brand_color' => $shop->brand_color,
+                'accent_color' => $shop->accent_color,
             ] : null,
             // Only PublicLayout reads this, but sharing it once here beats
             // re-querying it from every public controller action.
