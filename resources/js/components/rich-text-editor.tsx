@@ -16,9 +16,11 @@ import {
     Link as LinkIcon,
     List,
     ListOrdered,
+    MapPin,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
+import { Iframe } from '@/components/tiptap-iframe';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -95,6 +97,7 @@ export function RichTextEditor({
     const [html, setHtml] = useState(defaultValue ?? '');
     const [linkDialogOpen, setLinkDialogOpen] = useState(false);
     const [imageDialogOpen, setImageDialogOpen] = useState(false);
+    const [mapDialogOpen, setMapDialogOpen] = useState(false);
     const [urlValue, setUrlValue] = useState('');
 
     const editor = useEditor({
@@ -105,6 +108,7 @@ export function RichTextEditor({
             Details.configure({ persist: true, renderToggleButton }),
             DetailsSummary,
             DetailsContent,
+            Iframe,
         ],
         content: defaultValue ?? '',
         onUpdate: ({ editor }) => setHtml(editor.getHTML()),
@@ -132,9 +136,7 @@ export function RichTextEditor({
                 <ToolbarButton
                     label="Cursiva"
                     active={editor.isActive('italic')}
-                    onClick={() =>
-                        editor.chain().focus().toggleItalic().run()
-                    }
+                    onClick={() => editor.chain().focus().toggleItalic().run()}
                 >
                     <Italic className="size-4" />
                 </ToolbarButton>
@@ -142,11 +144,7 @@ export function RichTextEditor({
                     label="Subtitulo"
                     active={editor.isActive('heading', { level: 2 })}
                     onClick={() =>
-                        editor
-                            .chain()
-                            .focus()
-                            .toggleHeading({ level: 2 })
-                            .run()
+                        editor.chain().focus().toggleHeading({ level: 2 }).run()
                     }
                 >
                     <Heading2 className="size-4" />
@@ -195,6 +193,15 @@ export function RichTextEditor({
                 >
                     <ChevronsDownUp className="size-4" />
                 </ToolbarButton>
+                <ToolbarButton
+                    label="Mapa de Google"
+                    onClick={() => {
+                        setUrlValue('');
+                        setMapDialogOpen(true);
+                    }}
+                >
+                    <MapPin className="size-4" />
+                </ToolbarButton>
             </div>
 
             <EditorContent editor={editor} />
@@ -223,11 +230,7 @@ export function RichTextEditor({
                                 type="button"
                                 variant="outline"
                                 onClick={() => {
-                                    editor
-                                        .chain()
-                                        .focus()
-                                        .unsetLink()
-                                        .run();
+                                    editor.chain().focus().unsetLink().run();
                                     setLinkDialogOpen(false);
                                 }}
                             >
@@ -283,6 +286,52 @@ export function RichTextEditor({
                                 }
 
                                 setImageDialogOpen(false);
+                            }}
+                        >
+                            Insertar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={mapDialogOpen} onOpenChange={setMapDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Mapa de Google</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-2">
+                        <Label htmlFor="map-url">
+                            URL para insertar (embed)
+                        </Label>
+                        <Input
+                            id="map-url"
+                            value={urlValue}
+                            placeholder="https://www.google.com/maps?q=...&output=embed"
+                            onChange={(event) =>
+                                setUrlValue(event.target.value)
+                            }
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            En Google Maps: Compartir → Insertar un mapa → copia
+                            la URL del atributo src del iframe.
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            disabled={
+                                !urlValue.startsWith(
+                                    'https://www.google.com/maps',
+                                )
+                            }
+                            onClick={() => {
+                                editor
+                                    .chain()
+                                    .focus()
+                                    .setIframe({ src: urlValue })
+                                    .run();
+
+                                setMapDialogOpen(false);
                             }}
                         >
                             Insertar

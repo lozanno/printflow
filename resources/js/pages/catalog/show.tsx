@@ -1,5 +1,16 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ChevronDown, ImageOff, Star } from 'lucide-react';
+import {
+    ChevronDown,
+    Circle,
+    Copy,
+    ImageOff,
+    Palette,
+    RectangleHorizontal,
+    Sparkles,
+    Square,
+    Star,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,48 +168,33 @@ function ShowMoreToggle({
     );
 }
 
-function TableStyleOptions({
-    component,
-    selected,
-    onSelect,
-}: {
-    component: ProductComponent;
-    selected: SelectionValue | undefined;
-    onSelect: (value: string) => void;
-}) {
-    const [expanded, setExpanded] = useState(false);
-    const visible = expanded
-        ? component.options
-        : component.options.slice(0, VISIBLE_ITEM_LIMIT);
-    const hiddenCount = component.options.length - visible.length;
+/**
+ * Keyword groups checked in order against an option's value + label, to
+ * guess a line-icon that visually hints at what it represents - so an
+ * illustrated card without a real photo yet still shows something more
+ * meaningful than a generic "no image" glyph. Order matters: more specific
+ * keywords (e.g. "sin_laminado") must come before the broader ones they're
+ * a substring of (e.g. "laminado").
+ */
+const PLACEHOLDER_ICON_RULES: [keywords: string[], icon: LucideIcon][] = [
+    [['cuadrad', 'square'], Square],
+    [['circular', 'redond', 'oval'], Circle],
+    [['rectangular', 'rectangle'], RectangleHorizontal],
+    [['sin_laminado', 'sin laminado', 'mate'], RectangleHorizontal],
+    [['laminado', 'brillante', 'gloss'], Sparkles],
+    [['frente_vuelta', 'frente y vuelta', 'doble', 'ambos lados'], Copy],
+    [['frente', 'sencillo', 'un lado'], RectangleHorizontal],
+    [['color'], Palette],
+];
 
-    return (
-        <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200">
-            <div className="bg-zinc-50 px-4 py-2 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-                {component.label}
-            </div>
-            {visible.map((option) => (
-                <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => onSelect(option.value)}
-                    className={cn(
-                        'flex w-full items-center justify-between border-t border-zinc-100 px-4 py-3 text-left text-sm font-medium transition',
-                        selected === option.value
-                            ? 'border-[var(--shop-accent)] bg-zinc-50 text-zinc-900 ring-1 ring-[var(--shop-accent)] ring-inset'
-                            : 'text-zinc-700 hover:bg-zinc-50',
-                    )}
-                >
-                    {option.label}
-                </button>
-            ))}
-            <ShowMoreToggle
-                hiddenCount={hiddenCount}
-                expanded={expanded}
-                onToggle={() => setExpanded((current) => !current)}
-            />
-        </div>
+function pickPlaceholderIcon(option: ComponentOption): LucideIcon {
+    const text = `${option.value} ${option.label}`.toLowerCase();
+
+    const match = PLACEHOLDER_ICON_RULES.find(([keywords]) =>
+        keywords.some((keyword) => text.includes(keyword)),
     );
+
+    return match ? match[1] : Square;
 }
 
 function IllustratedOptions({
@@ -219,34 +215,41 @@ function IllustratedOptions({
     return (
         <div className="mt-3">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {visible.map((option) => (
-                    <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => onSelect(option.value)}
-                        className={cn(
-                            'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition',
-                            selected === option.value
-                                ? 'border-[var(--shop-accent)] ring-1 ring-[var(--shop-accent)]'
-                                : 'border-zinc-200 hover:border-zinc-400',
-                        )}
-                    >
-                        {option.image_url ? (
-                            <img
-                                src={option.image_url}
-                                alt=""
-                                className="h-16 w-16 object-contain"
-                            />
-                        ) : (
-                            <div className="flex h-16 w-16 items-center justify-center rounded bg-zinc-50 text-zinc-300">
-                                <ImageOff className="size-6" />
-                            </div>
-                        )}
-                        <span className="text-sm font-medium text-zinc-800">
-                            {option.label}
-                        </span>
-                    </button>
-                ))}
+                {visible.map((option) => {
+                    const PlaceholderIcon = pickPlaceholderIcon(option);
+
+                    return (
+                        <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => onSelect(option.value)}
+                            className={cn(
+                                'flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition',
+                                selected === option.value
+                                    ? 'border-[var(--shop-accent)] ring-1 ring-[var(--shop-accent)]'
+                                    : 'border-zinc-200 hover:border-zinc-400',
+                            )}
+                        >
+                            {option.image_url ? (
+                                <img
+                                    src={option.image_url}
+                                    alt=""
+                                    className="h-16 w-16 object-contain"
+                                />
+                            ) : (
+                                <div className="flex h-16 w-16 items-center justify-center rounded bg-zinc-50 text-zinc-400">
+                                    <PlaceholderIcon
+                                        className="size-7"
+                                        strokeWidth={1.5}
+                                    />
+                                </div>
+                            )}
+                            <span className="text-sm font-medium text-zinc-800">
+                                {option.label}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
             {hiddenCount > 0 && (
                 <button
@@ -808,49 +811,31 @@ export default function CatalogShow({
 
                     <div className="mt-8 space-y-7 rounded-2xl bg-white p-6 shadow-sm">
                         {catalogProduct.components.map((component) => {
-                            const hasIllustratedOptions =
-                                component.input_type === 'CHOICE' &&
-                                component.options.some((o) => o.image_url);
                             const selectedValue = selections[component.code];
 
                             return (
                                 <div key={component.code}>
-                                    {(component.input_type !== 'CHOICE' ||
-                                        hasIllustratedOptions) && (
-                                        <Label className="block text-sm font-semibold text-zinc-800">
-                                            {component.label}
-                                            {!component.is_required && (
-                                                <span className="ml-1 font-normal text-zinc-400">
-                                                    (opcional)
-                                                </span>
-                                            )}
-                                        </Label>
-                                    )}
+                                    <Label className="block text-sm font-semibold text-zinc-800">
+                                        {component.label}
+                                        {!component.is_required && (
+                                            <span className="ml-1 font-normal text-zinc-400">
+                                                (opcional)
+                                            </span>
+                                        )}
+                                    </Label>
 
-                                    {component.input_type === 'CHOICE' &&
-                                        (hasIllustratedOptions ? (
-                                            <IllustratedOptions
-                                                component={component}
-                                                selected={selectedValue}
-                                                onSelect={(value) =>
-                                                    updateSelection(
-                                                        component.code,
-                                                        value,
-                                                    )
-                                                }
-                                            />
-                                        ) : (
-                                            <TableStyleOptions
-                                                component={component}
-                                                selected={selectedValue}
-                                                onSelect={(value) =>
-                                                    updateSelection(
-                                                        component.code,
-                                                        value,
-                                                    )
-                                                }
-                                            />
-                                        ))}
+                                    {component.input_type === 'CHOICE' && (
+                                        <IllustratedOptions
+                                            component={component}
+                                            selected={selectedValue}
+                                            onSelect={(value) =>
+                                                updateSelection(
+                                                    component.code,
+                                                    value,
+                                                )
+                                            }
+                                        />
+                                    )}
 
                                     {component.input_type === 'NUMBER' && (
                                         <Input

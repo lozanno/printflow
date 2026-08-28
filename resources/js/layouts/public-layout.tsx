@@ -1,5 +1,15 @@
 import { Link, usePage } from '@inertiajs/react';
+import { Menu } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+    Sheet,
+    SheetClose,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import { home } from '@/routes';
 import { show } from '@/routes/catalog';
 
@@ -24,7 +34,7 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
             }
         >
             <header className="border-b border-zinc-200 bg-white">
-                <div className="mx-auto flex max-w-4xl items-center px-6 py-4">
+                <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
                     <Link
                         href={home()}
                         className="flex items-center gap-2 text-lg font-bold tracking-tight text-zinc-900"
@@ -39,6 +49,63 @@ export default function PublicLayout({ children }: { children: ReactNode }) {
                             shop?.name
                         )}
                     </Link>
+
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Abrir menu"
+                            >
+                                <Menu className="size-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right">
+                            <SheetHeader>
+                                <SheetTitle>{shop?.name ?? 'Menu'}</SheetTitle>
+                            </SheetHeader>
+                            <nav className="flex flex-col gap-1 overflow-y-auto px-4 pb-4">
+                                {footer && footer.categories.length > 0 && (
+                                    <>
+                                        <p className="mt-2 px-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                                            Categorias
+                                        </p>
+                                        {footer.categories.map((category) => (
+                                            <SheetClose
+                                                asChild
+                                                key={category.slug}
+                                            >
+                                                <Link
+                                                    href={show(category.slug)}
+                                                    className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                                                >
+                                                    {category.title}
+                                                </Link>
+                                            </SheetClose>
+                                        ))}
+                                    </>
+                                )}
+
+                                {footer && footer.pages.length > 0 && (
+                                    <>
+                                        <p className="mt-4 px-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                                            Paginas
+                                        </p>
+                                        {footer.pages.map((page) => (
+                                            <SheetClose asChild key={page.slug}>
+                                                <Link
+                                                    href={show(page.slug)}
+                                                    className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+                                                >
+                                                    {page.title}
+                                                </Link>
+                                            </SheetClose>
+                                        ))}
+                                    </>
+                                )}
+                            </nav>
+                        </SheetContent>
+                    </Sheet>
                 </div>
             </header>
 

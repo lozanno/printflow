@@ -202,3 +202,9 @@
 .prose div[data-type='detailsContent'] {
     @apply mt-2;
 }
+
+/* Google Maps embed inserted via the "Mapa de Google" button in
+ * RichTextEditor - see tiptap-iframe.ts and HtmlSanitizer. */
+.prose iframe {
+    @apply my-4 rounded-lg border border-zinc-200;
+}

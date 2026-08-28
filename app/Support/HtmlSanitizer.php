@@ -28,9 +28,16 @@ class HtmlSanitizer
             File::ensureDirectoryExists($cachePath);
 
             $config = HTMLPurifier_Config::createDefault();
-            $config->set('HTML.Allowed', 'p,br,strong,em,h2,h3,ul,ol,li,a[href],img[src|alt],blockquote,code,pre,hr,details[open],summary,div');
+            $config->set('HTML.Allowed', 'p,br,strong,em,h2,h3,ul,ol,li,a[href],img[src|alt],blockquote,code,pre,hr,details[open],summary,div,iframe[src|width|height|style]');
             $config->set('AutoFormat.RemoveEmpty', true);
             $config->set('Cache.SerializerPath', $cachePath);
+
+            // Lets RichTextEditor's "map" button embed a Google Maps iframe
+            // without opening the door to an arbitrary iframe (clickjacking,
+            // phishing) if an admin account is ever compromised - the src
+            // is dropped by SafeIframe unless it matches this host/path.
+            $config->set('HTML.SafeIframe', true);
+            $config->set('URI.SafeIframeRegexp', '%^https://www\.google\.com/maps%');
 
             // HTMLPurifier's bundled HTML definition predates HTML5, so
             // <details>/<summary> (used for collapsible sections in
@@ -45,7 +52,7 @@ class HtmlSanitizer
             // A DefinitionID/Rev is required so HTMLPurifier caches this
             // customized definition separately from the stock one.
             $config->set('HTML.DefinitionID', 'printflow-html-with-details');
-            $config->set('HTML.DefinitionRev', 3);
+            $config->set('HTML.DefinitionRev', 4);
 
             $definition = $config->maybeGetRawHTMLDefinition();
 
