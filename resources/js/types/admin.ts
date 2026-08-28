@@ -1,4 +1,13 @@
+import type { UserRole } from '@/types/auth';
+
 export type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
+
+export type AdminUser = {
+    id: number;
+    name: string;
+    email: string;
+    role: UserRole | null;
+};
 
 export type Page = {
     id: number;
@@ -124,6 +133,9 @@ export type OrderStatus =
 
 export type DeliveryType = 'SHIP' | 'PICKUP';
 
+export type ProductionStage =
+    'PENDING' | 'IN_PRODUCTION' | 'QUALITY_CHECK' | 'READY' | 'DELIVERED';
+
 export type AdminOrder = {
     id: number;
     customer_name: string;
@@ -133,6 +145,59 @@ export type AdminOrder = {
     currency: string;
     status: OrderStatus;
     delivery_type: DeliveryType;
+    production_stage: ProductionStage | null;
+    production_stage_updated_by: string | null;
+    production_stage_updated_at: string | null;
+    quality_checked: boolean;
+    quality_checked_by: string | null;
+    quality_checked_at: string | null;
+    created_at: string | null;
+};
+
+export type OrderTimelineEvent =
+    | {
+          type: 'stage_change';
+          from_stage: ProductionStage | null;
+          to_stage: ProductionStage;
+          user_name: string | null;
+          at: string;
+      }
+    | {
+          type: 'quality_check';
+          user_name: string | null;
+          at: string;
+      }
+    | {
+          type: 'note';
+          body: string;
+          user_name: string | null;
+          at: string;
+      };
+
+export type AdminOrderDetail = {
+    id: number;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string | null;
+    product_names: string;
+    total: number;
+    currency: string;
+    status: OrderStatus;
+    delivery_type: DeliveryType;
+    shipping_address: {
+        recipient_name: string;
+        phone: string;
+        line1: string;
+        line2: string | null;
+        city: string;
+        state: string;
+        postal_code: string;
+    } | null;
+    payment_method: string | null;
+    production_stage: ProductionStage | null;
+    quality_checked: boolean;
+    quality_checked_by: string | null;
+    quality_checked_at: string | null;
     created_at: string | null;
 };
 

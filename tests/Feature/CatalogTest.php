@@ -233,7 +233,6 @@ it('lets a product belong to more than one category at once', function () {
 
 it('does not let the catch-all slug route shadow the reserved application routes', function () {
     $this->get(route('login'))->assertOk();
-    $this->get(route('register'))->assertOk();
     $this->get(route('dashboard'))->assertRedirect(route('login'));
 });
 

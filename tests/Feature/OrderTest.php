@@ -3,6 +3,7 @@
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PricingStrategy;
+use App\Enums\ProductionStage;
 use App\Models\Customer;
 use App\Models\Order;
 
@@ -32,10 +33,16 @@ it('places a pickup order and marks it paid immediately', function () {
     $response->assertRedirect("/pedidos/{$order->id}/confirmacion");
 
     expect($order->status)->toBe(OrderStatus::Paid);
+    expect($order->production_stage)->toBe(ProductionStage::Pending);
     expect((float) $order->total)->toBe(550.0);
     expect($order->customer->email)->toBe('ana@example.com');
     expect($order->items()->sole()->catalog_product_id)->toBe($catalogProduct->id);
     expect($order->shippingAddress)->toBeNull();
+
+    $stageChange = $order->stageChanges()->sole();
+    expect($stageChange->from_stage)->toBeNull();
+    expect($stageChange->to_stage)->toBe(ProductionStage::Pending);
+    expect($stageChange->changed_by_user_id)->toBeNull();
 
     $payment = $order->payments()->sole();
     expect($payment->status)->toBe(PaymentStatus::Succeeded);

@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BookOpen,
     FileText,
@@ -10,6 +10,7 @@ import {
     ShoppingBag,
     SlidersHorizontal,
     Tag,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -33,53 +34,64 @@ import { index as ordersIndex } from '@/routes/admin/orders';
 import { index as pagesIndex } from '@/routes/admin/pages';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import { edit as shopSettingsEdit } from '@/routes/admin/settings';
-import type { NavItem } from '@/types';
+import { index as usersIndex } from '@/routes/admin/users';
+import type { NavItem, UserRole } from '@/types';
 
-const mainNavItems: NavMainEntry[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Componentes',
-        href: componentsIndex(),
-        icon: SlidersHorizontal,
-    },
-    {
-        title: 'Plantillas de producto',
-        href: productTemplatesIndex(),
-        icon: Package,
-    },
-    {
-        title: 'Catalogo',
-        href: catalogProductsIndex(),
-        icon: ShoppingBag,
-    },
-    {
-        title: 'Categorias',
-        href: categoriesIndex(),
-        icon: Tag,
-    },
-    { separator: true },
-    {
-        title: 'Pedidos',
-        href: ordersIndex(),
-        icon: Receipt,
-    },
-    { separator: true },
-    {
-        title: 'Paginas',
-        href: pagesIndex(),
-        icon: FileText,
-    },
-    { separator: true },
-    {
-        title: 'Ajustes de la tienda',
-        href: shopSettingsEdit(),
-        icon: Settings,
-    },
-];
+// Product/catalog configuration and staff management are admin-only.
+// Every other assigned role only ever needs the shared Pedidos view -
+// there's nothing else for them to do here yet (production stages and
+// the quality gate come in later phases).
+function buildNavItems(role: UserRole | null): NavMainEntry[] {
+    const items: NavMainEntry[] = [
+        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
+    ];
+
+    if (role === null) {
+        return items;
+    }
+
+    if (role === 'ADMIN') {
+        items.push(
+            {
+                title: 'Componentes',
+                href: componentsIndex(),
+                icon: SlidersHorizontal,
+            },
+            {
+                title: 'Plantillas de producto',
+                href: productTemplatesIndex(),
+                icon: Package,
+            },
+            {
+                title: 'Catalogo',
+                href: catalogProductsIndex(),
+                icon: ShoppingBag,
+            },
+            { title: 'Categorias', href: categoriesIndex(), icon: Tag },
+            { separator: true },
+        );
+    }
+
+    items.push(
+        { title: 'Pedidos', href: ordersIndex(), icon: Receipt },
+        { separator: true },
+    );
+
+    if (role === 'ADMIN') {
+        items.push(
+            { title: 'Paginas', href: pagesIndex(), icon: FileText },
+            { separator: true },
+            { title: 'Usuarios', href: usersIndex(), icon: Users },
+            {
+                title: 'Ajustes de la tienda',
+                href: shopSettingsEdit(),
+                icon: Settings,
+            },
+        );
+    }
+
+    return items;
+}
 
 const footerNavItems: NavItem[] = [
     {
@@ -95,6 +107,9 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const { auth } = usePage().props;
+    const mainNavItems = buildNavItems(auth.user.role);
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>

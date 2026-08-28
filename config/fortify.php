@@ -143,7 +143,10 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Registration is intentionally disabled: staff accounts are
+        // created by an admin from /admin/users (see UserController and
+        // UserRole), not self-service. Re-enabling this would resurrect
+        // the /register routes and hand out unrestricted signup again.
         Features::resetPasswords(),
     ],
 

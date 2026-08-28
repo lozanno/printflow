@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\DeliveryType;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductionStage;
 use App\Http\Requests\StoreOrderRequest;
 use App\Models\CatalogProduct;
 use App\Models\Customer;
@@ -98,6 +99,7 @@ class OrderController extends Controller
         ]);
 
         $order->update(['status' => OrderStatus::Paid]);
+        $order->advanceProductionStage(ProductionStage::Pending, null);
 
         return $order;
     }

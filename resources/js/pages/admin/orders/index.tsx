@@ -1,6 +1,15 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { toast } from 'sonner';
 import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Table,
     TableBody,
@@ -9,50 +18,50 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { index } from '@/routes/admin/orders';
-import type { AdminOrder, DeliveryType, OrderStatus } from '@/types/admin';
+import {
+    deliveryLabels,
+    formatDate,
+    formatMoney,
+    stageLabels,
+    stageVariants,
+    statusLabels,
+    statusVariants,
+} from '@/lib/orders';
+import { index, show } from '@/routes/admin/orders';
+import { update as updateProductionStage } from '@/routes/admin/orders/production-stage';
+import { update as updateQualityCheck } from '@/routes/admin/orders/quality-check';
+import type { AdminOrder, ProductionStage } from '@/types/admin';
 
-const statusLabels: Record<OrderStatus, string> = {
-    PENDING_PAYMENT: 'Pendiente de pago',
-    PAID: 'Pagado',
-    COMPLETED: 'Completado',
-    CANCELLED: 'Cancelado',
-};
-
-const statusVariants: Record<
-    OrderStatus,
-    'default' | 'secondary' | 'destructive' | 'outline'
-> = {
-    PENDING_PAYMENT: 'outline',
-    PAID: 'default',
-    COMPLETED: 'secondary',
-    CANCELLED: 'destructive',
-};
-
-const deliveryLabels: Record<DeliveryType, string> = {
-    PICKUP: 'Recoger en tienda',
-    SHIP: 'Envio a domicilio',
-};
-
-function formatMoney(amount: number, currency: string): string {
-    return new Intl.NumberFormat('es-MX', {
-        style: 'currency',
-        currency,
-    }).format(amount);
+function handleStageChange(orderId: number, stage: string) {
+    router.patch(
+        updateProductionStage(orderId).url,
+        { production_stage: stage },
+        {
+            preserveScroll: true,
+            onError: (errors) =>
+                toast.error(
+                    errors.production_stage ??
+                        'No se pudo actualizar la etapa.',
+                ),
+        },
+    );
 }
 
-function formatDate(iso: string | null): string {
-    if (!iso) {
-        return '-';
-    }
-
-    return new Intl.DateTimeFormat('es-MX', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(iso));
+function handleQualityCheckChange(orderId: number, passed: boolean) {
+    router.patch(
+        updateQualityCheck(orderId).url,
+        { passed },
+        { preserveScroll: true },
+    );
 }
 
 export default function OrdersIndex({ orders }: { orders: AdminOrder[] }) {
+    const { auth } = usePage().props;
+    const canAdvanceProduction =
+        auth.user.role === 'ADMIN' || auth.user.role === 'PRODUCCION';
+    const canCheckQuality =
+        auth.user.role === 'ADMIN' || auth.user.role === 'CALIDAD';
+
     return (
         <>
             <Head title="Pedidos" />
@@ -76,6 +85,8 @@ export default function OrdersIndex({ orders }: { orders: AdminOrder[] }) {
                                 <TableHead>Entrega</TableHead>
                                 <TableHead>Total</TableHead>
                                 <TableHead>Estado</TableHead>
+                                <TableHead>Produccion</TableHead>
+                                <TableHead>Calidad</TableHead>
                                 <TableHead>Fecha</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -83,9 +94,12 @@ export default function OrdersIndex({ orders }: { orders: AdminOrder[] }) {
                             {orders.map((order) => (
                                 <TableRow key={order.id}>
                                     <TableCell>
-                                        <div className="font-medium">
+                                        <Link
+                                            href={show(order.id)}
+                                            className="font-medium hover:underline"
+                                        >
                                             {order.customer_name}
-                                        </div>
+                                        </Link>
                                         <div className="text-xs text-muted-foreground">
                                             {order.customer_email}
                                         </div>
@@ -108,6 +122,100 @@ export default function OrdersIndex({ orders }: { orders: AdminOrder[] }) {
                                         >
                                             {statusLabels[order.status]}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {order.production_stage === null ? (
+                                            <span className="text-sm text-muted-foreground">
+                                                -
+                                            </span>
+                                        ) : canAdvanceProduction ? (
+                                            <Select
+                                                value={order.production_stage}
+                                                onValueChange={(value) =>
+                                                    handleStageChange(
+                                                        order.id,
+                                                        value,
+                                                    )
+                                                }
+                                            >
+                                                <SelectTrigger size="sm">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {(
+                                                        Object.keys(
+                                                            stageLabels,
+                                                        ) as ProductionStage[]
+                                                    ).map((stage) => (
+                                                        <SelectItem
+                                                            key={stage}
+                                                            value={stage}
+                                                        >
+                                                            {stageLabels[stage]}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        ) : (
+                                            <Badge
+                                                variant={
+                                                    stageVariants[
+                                                        order.production_stage
+                                                    ]
+                                                }
+                                            >
+                                                {
+                                                    stageLabels[
+                                                        order.production_stage
+                                                    ]
+                                                }
+                                            </Badge>
+                                        )}
+                                        {order.production_stage_updated_by && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {
+                                                    order.production_stage_updated_by
+                                                }{' '}
+                                                ·{' '}
+                                                {formatDate(
+                                                    order.production_stage_updated_at,
+                                                )}
+                                            </p>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {canCheckQuality ? (
+                                            <Checkbox
+                                                checked={order.quality_checked}
+                                                onCheckedChange={(checked) =>
+                                                    handleQualityCheckChange(
+                                                        order.id,
+                                                        checked === true,
+                                                    )
+                                                }
+                                                aria-label="Control de calidad aprobado"
+                                            />
+                                        ) : (
+                                            <Badge
+                                                variant={
+                                                    order.quality_checked
+                                                        ? 'default'
+                                                        : 'outline'
+                                                }
+                                            >
+                                                {order.quality_checked
+                                                    ? 'Aprobado'
+                                                    : 'Pendiente'}
+                                            </Badge>
+                                        )}
+                                        {order.quality_checked_by && (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {order.quality_checked_by} ·{' '}
+                                                {formatDate(
+                                                    order.quality_checked_at,
+                                                )}
+                                            </p>
+                                        )}
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
                                         {formatDate(order.created_at)}
