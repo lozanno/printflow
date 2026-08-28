@@ -1,9 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    BookOpen,
+    Banknote,
+    BarChart3,
+    Contact,
     FileText,
-    FolderGit2,
-    LayoutGrid,
     Package,
     Receipt,
     Settings,
@@ -13,7 +13,6 @@ import {
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import type { NavMainEntry } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -35,23 +34,32 @@ import { index as pagesIndex } from '@/routes/admin/pages';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import { edit as shopSettingsEdit } from '@/routes/admin/settings';
 import { index as usersIndex } from '@/routes/admin/users';
-import type { NavItem, UserRole } from '@/types';
+import type { UserRole } from '@/types';
 
 // Product/catalog configuration and staff management are admin-only.
-// Every other assigned role only ever needs the shared Pedidos view -
-// there's nothing else for them to do here yet (production stages and
-// the quality gate come in later phases).
+// Every other assigned role only ever needs the shared Clientes/Pedidos
+// block - there's nothing else for them to do here yet (production
+// stages and the quality gate come in later phases).
 function buildNavItems(role: UserRole | null): NavMainEntry[] {
-    const items: NavMainEntry[] = [
-        { title: 'Dashboard', href: dashboard(), icon: LayoutGrid },
-    ];
-
     if (role === null) {
-        return items;
+        return [];
     }
+
+    const items: NavMainEntry[] = [
+        { text: true, title: 'Clientes', icon: Contact },
+        { title: 'Pedidos', href: ordersIndex(), icon: Receipt },
+        { text: true, title: 'Facturacion', icon: Banknote },
+        { text: true, title: 'Estadisticas', icon: BarChart3 },
+        { separator: true },
+    ];
 
     if (role === 'ADMIN') {
         items.push(
+            {
+                title: 'Catalogo de ventas',
+                href: catalogProductsIndex(),
+                icon: ShoppingBag,
+            },
             {
                 title: 'Componentes',
                 href: componentsIndex(),
@@ -62,28 +70,13 @@ function buildNavItems(role: UserRole | null): NavMainEntry[] {
                 href: productTemplatesIndex(),
                 icon: Package,
             },
-            {
-                title: 'Catalogo',
-                href: catalogProductsIndex(),
-                icon: ShoppingBag,
-            },
             { title: 'Categorias', href: categoriesIndex(), icon: Tag },
             { separator: true },
-        );
-    }
-
-    items.push(
-        { title: 'Pedidos', href: ordersIndex(), icon: Receipt },
-        { separator: true },
-    );
-
-    if (role === 'ADMIN') {
-        items.push(
-            { title: 'Paginas', href: pagesIndex(), icon: FileText },
+            { title: 'Paginas publicas', href: pagesIndex(), icon: FileText },
             { separator: true },
             { title: 'Usuarios', href: usersIndex(), icon: Users },
             {
-                title: 'Ajustes de la tienda',
+                title: 'Ajustes globales',
                 href: shopSettingsEdit(),
                 icon: Settings,
             },
@@ -92,19 +85,6 @@ function buildNavItems(role: UserRole | null): NavMainEntry[] {
 
     return items;
 }
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
-    },
-];
 
 export function AppSidebar() {
     const { auth } = usePage().props;
@@ -129,7 +109,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

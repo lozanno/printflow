@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import type { LucideIcon } from 'lucide-react';
 import {
     SidebarGroup,
     SidebarGroupLabel,
@@ -10,7 +11,10 @@ import {
 import { useCurrentUrl } from '@/hooks/use-current-url';
 import type { NavItem } from '@/types';
 
-export type NavMainEntry = NavItem | { separator: true };
+export type NavMainEntry =
+    | NavItem
+    | { separator: true }
+    | { text: true; title: string; icon?: LucideIcon };
 
 export function NavMain({ items = [] }: { items: NavMainEntry[] }) {
     const { isCurrentUrl } = useCurrentUrl();
@@ -19,13 +23,28 @@ export function NavMain({ items = [] }: { items: NavMainEntry[] }) {
         <SidebarGroup className="px-2 py-0">
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
             <SidebarMenu>
-                {items.map((item, index) =>
-                    'separator' in item ? (
-                        <SidebarSeparator
-                            key={`separator-${index}`}
-                            className="my-2"
-                        />
-                    ) : (
+                {items.map((item, index) => {
+                    if ('separator' in item) {
+                        return (
+                            <SidebarSeparator
+                                key={`separator-${index}`}
+                                className="my-2"
+                            />
+                        );
+                    }
+
+                    if ('text' in item) {
+                        return (
+                            <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton disabled>
+                                    {item.icon && <item.icon />}
+                                    <span>{item.title}</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        );
+                    }
+
+                    return (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton
                                 asChild
@@ -38,8 +57,8 @@ export function NavMain({ items = [] }: { items: NavMainEntry[] }) {
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
-                    ),
-                )}
+                    );
+                })}
             </SidebarMenu>
         </SidebarGroup>
     );
