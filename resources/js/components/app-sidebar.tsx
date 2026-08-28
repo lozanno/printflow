@@ -5,6 +5,7 @@ import {
     FolderGit2,
     LayoutGrid,
     Package,
+    Receipt,
     Settings,
     ShoppingBag,
     SlidersHorizontal,
@@ -28,6 +29,7 @@ import { dashboard } from '@/routes';
 import { index as catalogProductsIndex } from '@/routes/admin/catalog-products';
 import { index as categoriesIndex } from '@/routes/admin/categories';
 import { index as componentsIndex } from '@/routes/admin/components';
+import { index as ordersIndex } from '@/routes/admin/orders';
 import { index as pagesIndex } from '@/routes/admin/pages';
 import { index as productTemplatesIndex } from '@/routes/admin/product-templates';
 import { edit as shopSettingsEdit } from '@/routes/admin/settings';
@@ -58,6 +60,12 @@ const mainNavItems: NavMainEntry[] = [
         title: 'Categorias',
         href: categoriesIndex(),
         icon: Tag,
+    },
+    { separator: true },
+    {
+        title: 'Pedidos',
+        href: ordersIndex(),
+        icon: Receipt,
     },
     { separator: true },
     {

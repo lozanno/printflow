@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { ChevronDown, ImageOff, Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn, getCsrfToken, toUrl } from '@/lib/utils';
 import { home } from '@/routes';
-import { quote, show, tierTable } from '@/routes/catalog';
+import { checkout, quote, show, tierTable } from '@/routes/catalog';
 
 type InputType = 'CHOICE' | 'NUMBER' | 'DIMENSIONS';
 type PricingStrategy = 'PER_UNIT_TIERED' | 'PER_AREA' | 'PER_AREA_WITH_SETUP';
@@ -756,6 +756,10 @@ export default function CatalogShow({
             .filter((label): label is string => label !== null),
     ];
 
+    function goToCheckout() {
+        router.get(checkout(catalogProduct.slug).url, { selections });
+    }
+
     const priceLabel = quoteResult
         ? formatMoney(quoteResult.total, quoteResult.currency)
         : (quoteError ??
@@ -930,10 +934,11 @@ export default function CatalogShow({
 
                             <Button
                                 variant="default"
-                                disabled
+                                disabled={!quoteResult}
+                                onClick={goToCheckout}
                                 className="shrink-0 bg-[var(--shop-accent)] text-white hover:opacity-90"
                             >
-                                Agregar al carrito
+                                Continuar al pedido
                             </Button>
                         </div>
                     </div>
@@ -958,7 +963,8 @@ export default function CatalogShow({
 
                     <Button
                         variant="secondary"
-                        disabled
+                        disabled={!quoteResult}
+                        onClick={goToCheckout}
                         className="shrink-0 bg-[var(--shop-accent)] text-white hover:opacity-90"
                     >
                         Continuar al pedido

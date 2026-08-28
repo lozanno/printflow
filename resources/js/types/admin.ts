@@ -119,6 +119,23 @@ export type CatalogProductReview = {
     sort_order: number;
 };
 
+export type OrderStatus =
+    'PENDING_PAYMENT' | 'PAID' | 'COMPLETED' | 'CANCELLED';
+
+export type DeliveryType = 'SHIP' | 'PICKUP';
+
+export type AdminOrder = {
+    id: number;
+    customer_name: string;
+    customer_email: string;
+    product_names: string;
+    total: number;
+    currency: string;
+    status: OrderStatus;
+    delivery_type: DeliveryType;
+    created_at: string | null;
+};
+
 export type CatalogProduct = {
     id: number;
     shop_id: number;
