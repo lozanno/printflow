@@ -14,7 +14,7 @@
   shop branding/settings, role-based access, an order list and a
   per-order detail page with a production pipeline, quality gate, and
   bitácora (see Phases 1-3.1 below).
-- 175 Pest tests (169 passing, 6 skipped).
+- 183 Pest tests (177 passing, 6 skipped).
 
 **Known gaps, not yet started:**
 
@@ -126,6 +126,26 @@ newest-first, instead of stitching three data sources together in React.
 Verified live: pipeline renders with the right stage highlighted, full
 stage-change history for a well-traveled order displays correctly, and
 a submitted note shows up at the top of the bitácora immediately.
+
+### Phase 3.2 - Ventas-facing scheduling & color-coded status - DONE (2026-08-28)
+
+Reworked the Pedidos list and detail page around what Ventas actually
+needs day to day. Shipped: `orders.estimated_delivery_date` and
+`orders.is_urgent`, editable only by Admin/Ventas from either the list
+(inline) or the detail page's Resumen card; `orders.needs_sales_attention`,
+a manual flag Ventas sets when an order can't move into production yet
+(no automatic rule - only a human following up with a client knows
+that). The Pedidos list dropped delivery type, product, total, and the
+quality column - it's now ID, cliente, fecha de pedido, fecha de
+entrega, and a color-coded Producción tag (view-only there; editing
+still only happens on the detail page). Colors are semantic everywhere
+they appear: amarillo = Pendiente, azul = En producción, morado =
+Control de calidad, naranja = Listo para entrega, verde = Entregado,
+and blanco overrides all of those while `needs_sales_attention` is on.
+The detail page's "Detalles" card was renamed "Resumen" and dropped the
+shipping address (kept in the payload, just not shown up top). Customer
+management from the admin panel (for walk-in/in-house orders) was
+explicitly scoped out of this round - noted for a future phase.
 
 ### Phase 4 - Printable ticket
 

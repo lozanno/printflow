@@ -26,8 +26,9 @@ it('lists placed orders', function () {
         ->assertInertia(fn ($page) => $page
             ->component('admin/orders/index')
             ->has('orders', 1)
-            ->where('orders.0.customer_email', 'ana@example.com')
-            ->where('orders.0.total', 550)
-            ->where('orders.0.status', 'PAID')
+            ->where('orders.0.customer_name', 'Ana Garcia')
+            ->where('orders.0.needs_sales_attention', false)
+            ->where('orders.0.estimated_delivery_date', null)
+            ->where('orders.0.is_urgent', false)
         );
 });

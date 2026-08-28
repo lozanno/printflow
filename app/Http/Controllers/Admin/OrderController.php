@@ -6,8 +6,10 @@ use App\Enums\ProductionStage;
 use App\Exceptions\QualityCheckRequiredException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreOrderNoteRequest;
+use App\Http\Requests\Admin\UpdateOrderDeliveryRequest;
 use App\Http\Requests\Admin\UpdateOrderProductionStageRequest;
 use App\Http\Requests\Admin\UpdateOrderQualityCheckRequest;
+use App\Http\Requests\Admin\UpdateOrderSalesAttentionRequest;
 use App\Models\Order;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
@@ -23,31 +25,16 @@ class OrderController extends Controller
 
         return Inertia::render('admin/orders/index', [
             'orders' => $shop->orders()
-                ->with([
-                    'customer',
-                    'items.catalogProduct.productTemplate',
-                    'qualityCheckedByUser',
-                    'stageChanges' => fn ($query) => $query->latest('id')->with('changedByUser')->limit(1),
-                ])
+                ->with(['customer'])
                 ->latest()
                 ->get()
                 ->map(fn (Order $order) => [
                     'id' => $order->id,
                     'customer_name' => $order->customer->name,
-                    'customer_email' => $order->customer->email,
-                    'product_names' => $order->items
-                        ->map(fn ($item) => $item->catalogProduct->name_override ?? $item->catalogProduct->productTemplate->name)
-                        ->implode(', '),
-                    'total' => (float) $order->total,
-                    'currency' => $order->currency,
-                    'status' => $order->status->value,
-                    'delivery_type' => $order->delivery_type->value,
                     'production_stage' => $order->production_stage?->value,
-                    'production_stage_updated_by' => $order->stageChanges->first()?->changedByUser?->name,
-                    'production_stage_updated_at' => $order->stageChanges->first()?->created_at?->toIso8601String(),
-                    'quality_checked' => $order->quality_checked_at !== null,
-                    'quality_checked_by' => $order->qualityCheckedByUser?->name,
-                    'quality_checked_at' => $order->quality_checked_at?->toIso8601String(),
+                    'needs_sales_attention' => $order->needs_sales_attention,
+                    'estimated_delivery_date' => $order->estimated_delivery_date?->toDateString(),
+                    'is_urgent' => $order->is_urgent,
                     'created_at' => $order->created_at?->toIso8601String(),
                 ]),
         ]);
@@ -90,7 +77,10 @@ class OrderController extends Controller
                     'postal_code' => $order->shippingAddress->postal_code,
                 ] : null,
                 'payment_method' => $order->payments->first()?->method?->value,
+                'estimated_delivery_date' => $order->estimated_delivery_date?->toDateString(),
+                'is_urgent' => $order->is_urgent,
                 'production_stage' => $order->production_stage?->value,
+                'needs_sales_attention' => $order->needs_sales_attention,
                 'quality_checked' => $order->quality_checked_at !== null,
                 'quality_checked_by' => $order->qualityCheckedByUser?->name,
                 'quality_checked_at' => $order->quality_checked_at?->toIso8601String(),
@@ -128,6 +118,36 @@ class OrderController extends Controller
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Etapa de produccion actualizada.')]);
+
+        return back();
+    }
+
+    public function updateDelivery(UpdateOrderDeliveryRequest $request, Order $order): RedirectResponse
+    {
+        $this->ensureBelongsToCurrentShop($order);
+
+        $order->update([
+            'estimated_delivery_date' => $request->validated('estimated_delivery_date'),
+            'is_urgent' => $request->boolean('is_urgent'),
+        ]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Entrega actualizada.')]);
+
+        return back();
+    }
+
+    public function updateSalesAttention(UpdateOrderSalesAttentionRequest $request, Order $order): RedirectResponse
+    {
+        $this->ensureBelongsToCurrentShop($order);
+
+        $order->update(['needs_sales_attention' => $request->boolean('needs_sales_attention')]);
+
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => $request->boolean('needs_sales_attention')
+                ? __('Pedido marcado para seguimiento de ventas.')
+                : __('Seguimiento de ventas resuelto.'),
+        ]);
 
         return back();
     }

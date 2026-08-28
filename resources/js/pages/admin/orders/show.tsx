@@ -18,17 +18,21 @@ import { Textarea } from '@/components/ui/textarea';
 import {
     deliveryLabels,
     formatDate,
+    formatDateOnly,
     formatMoney,
     productionStages,
+    stageBadgeClasses,
     stageLabels,
     statusLabels,
     statusVariants,
 } from '@/lib/orders';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/admin/orders';
+import { update as updateDelivery } from '@/routes/admin/orders/delivery';
 import { store as storeNote } from '@/routes/admin/orders/notes';
 import { update as updateProductionStage } from '@/routes/admin/orders/production-stage';
 import { update as updateQualityCheck } from '@/routes/admin/orders/quality-check';
+import { update as updateSalesAttention } from '@/routes/admin/orders/sales-attention';
 import type { AdminOrderDetail, OrderTimelineEvent } from '@/types/admin';
 
 function handleStageChange(orderId: number, stage: string) {
@@ -54,10 +58,32 @@ function handleQualityCheckChange(orderId: number, passed: boolean) {
     );
 }
 
+function handleDeliveryChange(
+    orderId: number,
+    estimatedDeliveryDate: string | null,
+    isUrgent: boolean,
+) {
+    router.patch(
+        updateDelivery(orderId).url,
+        { estimated_delivery_date: estimatedDeliveryDate, is_urgent: isUrgent },
+        { preserveScroll: true },
+    );
+}
+
+function handleSalesAttentionChange(orderId: number, needsAttention: boolean) {
+    router.patch(
+        updateSalesAttention(orderId).url,
+        { needs_sales_attention: needsAttention },
+        { preserveScroll: true },
+    );
+}
+
 function Pipeline({
     current,
+    needsSalesAttention,
 }: {
     current: AdminOrderDetail['production_stage'];
+    needsSalesAttention: boolean;
 }) {
     const currentIndex = current ? productionStages.indexOf(current) : -1;
 
@@ -78,7 +104,11 @@ function Pipeline({
                                     'flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold',
                                     isDone &&
                                         'border-primary bg-primary text-primary-foreground',
-                                    isCurrent && 'border-primary text-primary',
+                                    isCurrent &&
+                                        stageBadgeClasses(
+                                            stage,
+                                            needsSalesAttention,
+                                        ),
                                     !isDone &&
                                         !isCurrent &&
                                         'border-muted-foreground/30 text-muted-foreground',
@@ -178,6 +208,8 @@ export default function OrderShow({
         auth.user.role === 'ADMIN' || auth.user.role === 'PRODUCCION';
     const canCheckQuality =
         auth.user.role === 'ADMIN' || auth.user.role === 'CALIDAD';
+    const canEditDelivery =
+        auth.user.role === 'ADMIN' || auth.user.role === 'VENTAS';
 
     const noteForm = useForm({ body: '' });
 
@@ -197,7 +229,13 @@ export default function OrderShow({
                 <div className="flex items-center justify-between">
                     <Heading
                         title={`Pedido #${order.id}`}
-                        description={`${order.customer_name} · ${order.customer_email}`}
+                        description={[
+                            order.customer_name,
+                            order.customer_email,
+                            order.customer_phone,
+                        ]
+                            .filter(Boolean)
+                            .join(' · ')}
                     />
                     <Badge variant={statusVariants[order.status]}>
                         {statusLabels[order.status]}
@@ -206,7 +244,7 @@ export default function OrderShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">Detalles</CardTitle>
+                        <CardTitle className="text-base">Resumen</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -227,23 +265,6 @@ export default function OrderShow({
                             </span>
                             <span>{deliveryLabels[order.delivery_type]}</span>
                         </div>
-                        {order.shipping_address && (
-                            <div className="flex justify-between gap-4">
-                                <span className="text-muted-foreground">
-                                    Direccion
-                                </span>
-                                <span className="text-right">
-                                    {order.shipping_address.recipient_name},{' '}
-                                    {order.shipping_address.line1}
-                                    {order.shipping_address.line2
-                                        ? `, ${order.shipping_address.line2}`
-                                        : ''}
-                                    , {order.shipping_address.city},{' '}
-                                    {order.shipping_address.state}{' '}
-                                    {order.shipping_address.postal_code}
-                                </span>
-                            </div>
-                        )}
                         {order.payment_method && (
                             <div className="flex justify-between">
                                 <span className="text-muted-foreground">
@@ -256,9 +277,54 @@ export default function OrderShow({
                         )}
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">
-                                Creado
+                                Fecha de pedido
                             </span>
                             <span>{formatDate(order.created_at)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                                Fecha de entrega final
+                            </span>
+                            {canEditDelivery ? (
+                                <input
+                                    type="date"
+                                    value={order.estimated_delivery_date ?? ''}
+                                    onChange={(event) =>
+                                        handleDeliveryChange(
+                                            order.id,
+                                            event.target.value || null,
+                                            order.is_urgent,
+                                        )
+                                    }
+                                    className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                                />
+                            ) : (
+                                <span>
+                                    {formatDateOnly(
+                                        order.estimated_delivery_date,
+                                    )}
+                                </span>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                                Urgente
+                            </span>
+                            {canEditDelivery ? (
+                                <Checkbox
+                                    checked={order.is_urgent}
+                                    onCheckedChange={(checked) =>
+                                        handleDeliveryChange(
+                                            order.id,
+                                            order.estimated_delivery_date,
+                                            checked === true,
+                                        )
+                                    }
+                                    aria-label="Pedido urgente"
+                                />
+                            ) : (
+                                <span>{order.is_urgent ? 'Si' : 'No'}</span>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -271,9 +337,31 @@ export default function OrderShow({
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <Pipeline current={order.production_stage} />
+                            <Pipeline
+                                current={order.production_stage}
+                                needsSalesAttention={
+                                    order.needs_sales_attention
+                                }
+                            />
 
                             <div className="flex flex-wrap items-center gap-6">
+                                {canEditDelivery && (
+                                    <label className="flex items-center gap-2 text-sm">
+                                        <Checkbox
+                                            checked={
+                                                order.needs_sales_attention
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                handleSalesAttentionChange(
+                                                    order.id,
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        Necesita atencion de ventas
+                                    </label>
+                                )}
+
                                 {canAdvanceProduction && (
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm text-muted-foreground">

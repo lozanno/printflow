@@ -139,18 +139,10 @@ export type ProductionStage =
 export type AdminOrder = {
     id: number;
     customer_name: string;
-    customer_email: string;
-    product_names: string;
-    total: number;
-    currency: string;
-    status: OrderStatus;
-    delivery_type: DeliveryType;
     production_stage: ProductionStage | null;
-    production_stage_updated_by: string | null;
-    production_stage_updated_at: string | null;
-    quality_checked: boolean;
-    quality_checked_by: string | null;
-    quality_checked_at: string | null;
+    needs_sales_attention: boolean;
+    estimated_delivery_date: string | null;
+    is_urgent: boolean;
     created_at: string | null;
 };
 
@@ -194,7 +186,10 @@ export type AdminOrderDetail = {
         postal_code: string;
     } | null;
     payment_method: string | null;
+    estimated_delivery_date: string | null;
+    is_urgent: boolean;
     production_stage: ProductionStage | null;
+    needs_sales_attention: boolean;
     quality_checked: boolean;
     quality_checked_by: string | null;
     quality_checked_at: string | null;

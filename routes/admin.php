@@ -34,6 +34,16 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->name('admin.')->group(
             ->name('orders.production-stage.update');
     });
 
+    // Ventas owns the client relationship: when it ships, and whether
+    // production needs to hold off because the sale isn't actually settled
+    // yet.
+    Route::middleware('role:ADMIN,VENTAS')->group(function () {
+        Route::patch('orders/{order}/delivery', [OrderController::class, 'updateDelivery'])
+            ->name('orders.delivery.update');
+        Route::patch('orders/{order}/sales-attention', [OrderController::class, 'updateSalesAttention'])
+            ->name('orders.sales-attention.update');
+    });
+
     // Calidad's sign-off - enforced in Order::advanceProductionStage(),
     // not just by who can reach this route.
     Route::middleware('role:ADMIN,CALIDAD')->group(function () {

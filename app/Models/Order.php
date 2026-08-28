@@ -18,8 +18,11 @@ use Illuminate\Support\Carbon;
  * @property int $shop_id
  * @property int $customer_id
  * @property DeliveryType $delivery_type
+ * @property Carbon|null $estimated_delivery_date
+ * @property bool $is_urgent
  * @property OrderStatus $status
  * @property ProductionStage|null $production_stage
+ * @property bool $needs_sales_attention
  * @property Carbon|null $quality_checked_at
  * @property int|null $quality_checked_by_user_id
  * @property string $subtotal
@@ -33,8 +36,11 @@ use Illuminate\Support\Carbon;
     'shop_id',
     'customer_id',
     'delivery_type',
+    'estimated_delivery_date',
+    'is_urgent',
     'status',
     'production_stage',
+    'needs_sales_attention',
     'quality_checked_at',
     'quality_checked_by_user_id',
     'subtotal',
@@ -51,8 +57,11 @@ class Order extends Model
     {
         return [
             'delivery_type' => DeliveryType::class,
+            'estimated_delivery_date' => 'date',
+            'is_urgent' => 'boolean',
             'status' => OrderStatus::class,
             'production_stage' => ProductionStage::class,
+            'needs_sales_attention' => 'boolean',
             'quality_checked_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'shipping_cost' => 'decimal:2',
